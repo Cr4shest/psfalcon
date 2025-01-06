@@ -633,7 +633,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconAdminCommand
           } elseif ($Wait -and $SessionId) {
             Wait-RtrCommand $Request $MyInvocation.MyCommand.Name
           } else {
-            Write-Host ($Request | ConvertTo-Json)
             $Request
           }
         }
