@@ -355,6 +355,7 @@
     # oauth2
     'Request-FalconToken'
     'Revoke-FalconToken'
+    'Show-FalconToken'
     'Test-FalconToken'
 
     # ods
