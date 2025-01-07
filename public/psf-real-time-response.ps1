@@ -476,7 +476,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconDeploy
                       }
                     }
                   }
-                  OptionalHostId = if ($Cmd -eq 'mkdir') { $Pair.Value } else { $Optional }
+                  OptionalHostId = if ($Cmd -eq 'mkdir') {
+                    # Use all available hosts, by OS, for initial step
+                    $Pair.Value
+                  } elseif ($Cmd -eq 'run' -and $Pair.Key -match '^(Mac|Windows)$' -and
+                  $PSCmdlet.ParameterSetName -match '_File') {
+                    # Use all available hosts for Mac/Windows when 'extract' step is skipped
+                    $Pair.Value
+                  } else {
+                    # Use hosts that successfully completed previous step
+                    $Optional
+                  }
                   Timeout = if ($Cmd -eq 'put') { 530 } else { $Timeout }
                 }
                 [string[]]$Optional = if ($Param.OptionalHostId -and $Param.Argument) {
