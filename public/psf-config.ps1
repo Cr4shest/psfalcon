@@ -805,7 +805,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               Set-Property $Item.settings build $null
             }
           }
-          if (!$Item.settings.build) {
+          if ($Item -and !$Item.settings.build) {
             # Strip build, sensor_version and stage if 'build' is not present in policy
             Write-Log 'Import-FalconConfig' (
               'Removed build values from {0} policy "{1}"' -f $Item.platform_name,$Item.name)
