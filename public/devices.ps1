@@ -694,8 +694,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconHostGroup
   end {
     if ($List) {
       [void]$PSBoundParameters.Remove('Id')
-      for ($i = 0; $i -lt $List.Count; $i += 50) {
-        $PSBoundParameters['ids'] = @($List[$i..($i + 49)])
+      for ($i = 0; $i -lt $List.Count; $i += 20) {
+        $PSBoundParameters['ids'] = @($List[$i..($i + 19)])
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }
