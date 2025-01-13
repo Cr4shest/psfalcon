@@ -534,8 +534,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconHostGroupAction
     if ($List) {
       $PSBoundParameters['ids'] = @($PSBoundParameters.Id)
       [void]$PSBoundParameters.Remove('HostId')
-      for ($i = 0; $i -lt $List.Count; $i += 500) {
-        $IdString = (@($List[$i..($i + 499)]).foreach{ "'$_'" }) -join ','
+      for ($i=0;$i -lt $List.Count;$i+=500) {
+        $IdString = (@($List[$i..($i+499)]).foreach{ "'$_'" }) -join ','
         $PSBoundParameters['action_parameters'] = @(
           @{ name = 'filter'; value = "(device_id:[$IdString])" }
         )
@@ -613,8 +613,8 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconHostGroup
     if ($List) {
       [void]$PSBoundParameters.Remove('InputObject')
       $Param.Format.Body = @{ root = @('resources') }
-      for ($i = 0; $i -lt $List.Count; $i += 20) {
-        $PSBoundParameters['resources'] = @($List[$i..($i + 19)])
+      for ($i=0;$i -lt $List.Count;$i+=10) {
+        $PSBoundParameters['resources'] = @($List[$i..($i+9)])
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }
@@ -694,8 +694,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconHostGroup
   end {
     if ($List) {
       [void]$PSBoundParameters.Remove('Id')
-      for ($i = 0; $i -lt $List.Count; $i += 20) {
-        $PSBoundParameters['ids'] = @($List[$i..($i + 19)])
+      for ($i=0;$i -lt $List.Count;$i+=10) {
+        $PSBoundParameters['ids'] = @($List[$i..($i+9)])
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }
