@@ -1073,17 +1073,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                   #  }
                   } elseif ($Pair.Key -eq 'IoaGroup' -and $_ -eq 'rules') {
                     foreach ($Rule in $Item.$_) {
-                      # Evaluate each IoaRule
-                      [object]$CidRule = $Cid.$_ | Where-Object { $_.ruletype_id -eq $Rule.ruletype_id -and
-                        $_.name -eq $Rule.name -and $Rule.deleted -ne $true }
+                      # Evaluate each imported IoaRule against IoaRule in CID
+                      $CidRule = @($Cid.$_).Where({$_.ruletype_id -eq $Rule.ruletype_id -and
+                        $_.name -eq $Rule.name -and $Rule.deleted -ne $true})
                       [string[]]$RuleDiff = if ($CidRule) {
                         @('enabled','pattern_severity','action_label').foreach{
                           if (Compare-Object $Rule.$_ $CidRule.$_) { $_ }
                         }
                         foreach ($FieldValue in $Rule.field_values) {
                           # Evaluate 'field_value' as a Json string for each IoaRule
-                          [object]$CidFieldValue = $CidRule.field_values | Where-Object {
-                            $_.name -eq $FieldValue.name -and $_.type -eq $FieldValue.type }
+                          $CidFieldValue = @($CidRule.field_values).Where({$_.name -eq $FieldValue.name -and
+                            $_.type -eq $FieldValue.type})
                           if ($CidFieldValue) {
                             if (Compare-Object ($FieldValue.values | ConvertTo-Json) ($CidFieldValue.values |
                             ConvertTo-Json)) {
