@@ -1106,7 +1106,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                       if ($RuleDiff) {
                         # Copy existing rule and modify properties
                         [object]$RuleEdit = $CidRule.PSObject.Copy()
-                        @($RuleDiff).foreach{ $RuleEdit.$_ = $Rule.$_ }
+                        @($RuleDiff).foreach{ Set-Property $RuleEdit $_ $Rule.$_ }
+                        if ([string]::IsNullOrEmpty($RuleEdit.comment)) {
+                          # Add comment when not present
+                          Set-Property $RuleEdit comment ($UserAgent,"Import-FalconConfig" -join ': ')
+                        }
                         @(Edit-FalconIoaRule -RuleUpdate $RuleEdit -RuleGroupId $Item.id).foreach{
                           # Capture result for each updated setting against original
                           @($RuleDiff).foreach{ Compare-Setting $RuleEdit $CidRule IoaRule $_ -Result }
@@ -1126,10 +1130,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
           if ($EditList) {
             foreach ($Edit in $EditList) {
-              # Update with current 'id' and 'comment' when appropriate
+              # Update with current 'id'
               Set-Property $Edit id ($Config.Ids.($Pair.Key) | Where-Object { $_.old_id -eq $Edit.id }).new_id
-              if ($Pair.Key -ne 'HostGroup') {
+              if ($Pair.Key -ne 'HostGroup' -and [string]::IsNullOrEmpty($Edit.comment)) {
+                # Add 'comment'
                 Set-Property $Edit comment ($UserAgent,"Import-FalconConfig" -join ': ')
+              }
+              if ($Pair.Key -eq 'IoaGroup' -and [string]::IsNullOrEmpty($Edit.version)) {
+                # Add 'version' to 'IoaGroup'
+                Set-Property $Edit version 1
               }
             }
             if ($Pair.Key -eq 'FirewallGroup') {
