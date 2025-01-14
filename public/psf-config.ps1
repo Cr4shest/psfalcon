@@ -140,6 +140,9 @@ Falcon environment.
 
 Anything that already exists will be ignored and no existing items will be modified unless the relevant switch
 parameters are included.
+
+Requires 'Sensor Download: Read' for CID comparison, plus relevant read and write permissions for the items you
+are attempting to import.
 .PARAMETER Path
 FalconConfig archive path
 .PARAMETER AssignExisting
@@ -610,13 +613,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             # Combine '$Property.$Id' values
             Add-Result Modified $Object $Type $Property ($Cid.$Property -join ',') ($Req -join ',')
           }
+        } elseif ($Type -eq 'PreventionPolicy' -and $Property -eq 'ioa_rule_groups' -and $Object.name -match
+        $PolicyDefault) {
+          # Record that no changes were made for default policy when no IoaGroup assigned
+          Add-Result Ignored $Object $Type -Comment Identical
         }
       }
     }
     function Update-Id ([object]$Item,[string]$Type) {
       if ($Config.Ids.$Type) {
         # Add 'new_id' to 'Ids'
-        [string[]]$Compare = @('cid','platform_name','platform','type','value','name').foreach{
+        [string[]]$Compare = @('platform_name','platform','type','value','name').foreach{
           if ($Item.$_) { $_ }
         }
         [string]$Filter = (@($Compare).foreach{ "`$_.$($_) -eq '$($Item.$_)'" }) -join ' -and '
@@ -635,6 +642,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
   process {
     # Import configuration files and capture identifiers for comparison
     if (!$ArchivePath) { throw "Failed to resolve '$($PSBoundParameters.Path)'." }
+    [string]$Local:HomeCid = try {
+      # Attempt to retrieve CID using 'Get-FalconCcid' for evaluation
+      Confirm-CidValue (Get-FalconCcid -EA 0)
+    } catch {
+      throw "Failed to retrieve target CID value. Verify 'Sensor Download: Read' permission."
+    }
     $Config = Import-ConfigData $ArchivePath
     @($Config.Keys).Where({$_ -notmatch '^(Ids|FirewallRule|Result)$'}).foreach{
       if ($Allowed -notcontains $_) {
@@ -644,13 +657,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }) -join ',')]."
       }
     }
-    # Attempt to retrieve CID using 'Get-FalconCcid' for evaluation
-    [string]$Local:HomeCid = Confirm-CidValue (Get-FalconCcid -EA 0)
     foreach ($Pair in $Config.GetEnumerator().Where({$_.Value.Import})) {
       foreach ($Import in $Pair.Value.Import) {
         # Create a record of identifiers within CID to compare with imports
         $Import = Compress-Property $Import
-        @($Import | Select-Object cid,name,platform,platforms,platform_name,type,value).foreach{
+        @($Import | Select-Object name,platform,platforms,platform_name,type,value).foreach{
           $Id = if ($Import.family) { $Import.family } else { $Import.id }
           Set-Property $_ old_id $Id
           Set-Property $_ new_id $null
@@ -872,7 +883,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         foreach ($Item in $Pair.Value.$_) {
           @('groups','host_groups').foreach{
             foreach ($OldId in $Item.$_) {
-              [string]$NewId = @($Config.Ids.HostGroup).Where({$_.old_id -eq $OldId}).new_id
+              $NewId = @($Config.Ids.HostGroup).Where({$_.old_id -eq $OldId}).new_id
               if ($NewId) {
                 [string[]]$Item.$_ = $Item.$_ -replace $OldId,$NewId
                 if ($NewId -ne $OldId) {
@@ -1164,18 +1175,18 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     foreach ($Pair in $Config.GetEnumerator().Where({$_.Key -match 'Policy$' -and $_.Value.Modify})) {
       foreach ($Policy in $Pair.Value.Modify) {
         # Retrieve matching policy from CID
-        [object[]]$Cid = @($Config.($Pair.Key).Cid).Where({$_.name -eq $Policy.name -and $_.platform_name -eq
-          $Policy.platform_name})
-        [string]$Policy.id = @($Config.Ids.($Pair.Key)).Where({$_.name -eq $Policy.name -and
-            $_.platform_name -eq $Policy.platform_name}).new_id
+        [object[]]$Cid = @($Config.($Pair.Key).Cid).Where({$_.platform_name -eq $Policy.platform_name -and
+          $_.name -eq $Policy.name})
+        [string]$Policy.id = @($Config.Ids.($Pair.Key)).Where({$_.platform_name -eq $Policy.platform_name -and
+          $_.name -eq $Policy.name}).new_id
         if ($HomeCid -and @($Cid).Where({$_.cid -eq $HomeCid})) {
           # Filter by 'cid' if re-importing into source CID
           [object[]]$Cid = @($Cid).Where({$_.cid -eq $HomeCid})
         }
         if ($Policy.name -match $PolicyDefault -and ($Cid | Measure-Object).Count -gt 1) {
           # Make no changes when more than one default policy is found
-          Add-Result Ignored $Policy $Pair.Key -Comment "Multiple $($Policy.platform_name) $(
-            $Policy.name) present; no changes made"
+          Add-Result Ignored $Policy $Pair.Key -Comment "Multiple $($Policy.platform_name) '$(
+            $Policy.name)' present"
         } else {
           # Use matching ID from CID if 'new_id' was not found for policy
           if (!$Policy.id -and $Cid.id) { $Policy.id = $Cid.id }
@@ -1226,20 +1237,20 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             $Setting = Compare-Setting $Policy $Cid $Pair.Key
             if ($Setting) {
               try {
-                # Modify Policy
+                # Modify Policy and capture result
                 @(& "Edit-Falcon$($Pair.Key)" -Id $Policy.id -Setting $Setting).foreach{
                   Compare-Setting (Compress-Property $_) $Cid $Pair.Key -Result
                 }
               } catch {
                 Write-Error $_
               }
-            } elseif ($Policy.name -match $PolicyDefault) {
-              # Record that no changes were made for default policy
+            } elseif ($Policy.name -match $PolicyDefault -and !$Policy.ioa_rule_groups) {
+              # Record that no changes were made for default policy when no IoaGroup comparison needed
               Add-Result Ignored $Policy $Pair.Key -Comment Identical
             }
           }
-          if ($Policy.id -and $Policy.name -notmatch $PolicyDefault) {
-            if ($Pair.Key -eq 'FileVantagePolicy') {
+          if ($Policy.id) {
+            if ($Pair.Key -eq 'FileVantagePolicy' -and $Policy.name -notmatch $PolicyDefault) {
               if ($Policy.exclusions) {
                 foreach ($Exclusion in $Policy.exclusions) {
                   # Check for existing matching exclusion
@@ -1295,15 +1306,30 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 if ($Req) { Add-Result Modified $Req $Pair.Key enabled $Cid.enabled $Policy.enabled }
               }
             } else {
-              # Assign IoaGroup and HostGroup
-              if ($Policy.ioa_rule_groups) { Submit-Group $Pair.Key ioa_rule_groups $Policy $Cid }
-              if ($Policy.groups) { Submit-Group $Pair.Key groups $Policy $Cid }
-              if ($Policy.host_groups) { Submit-Group $Pair.Key host_groups $Policy $Cid }
-              if ($Cid.enabled -ne $Policy.enabled) {
-                # Enable/disable non-inherited policies
-                [string]$Action = if ($Policy.enabled -eq $true) { 'enable' } else { 'disable' }
-                $Req = Invoke-PolicyAction $Pair.Key $Action $Policy.id
-                if ($Req) { Add-Result Modified $Req $Pair.Key enabled $Cid.enabled $Policy.enabled }
+              if ($Pair.Key -eq 'PreventionPolicy' -and $Policy.ioa_rule_groups) {
+                foreach ($OldId in $Policy.ioa_rule_groups) {
+                  # Update 'ioa_rule_groups' with new identifier(s)
+                  $NewId = @($Config.Ids.IoaGroup).Where({$_.old_id -eq $OldId}).new_id
+                  [string[]]$Policy.ioa_rule_groups = $Policy.ioa_rule_groups -replace $OldId,$NewId
+                  if ($NewId -and $NewId -ne $OldId) {
+                    Write-Log 'Import-FalconConfig' ('Updated {0} "{1}" id "{2}" to "{3}"' -f $Pair.Key,
+                      'ioa_rule_groups',$OldId,$NewId)
+                  }
+                }
+                # Assign IoaGroup
+                if ($Policy.ioa_rule_groups) { Submit-Group $Pair.Key ioa_rule_groups $Policy $Cid }
+              }
+              if ($Policy.name -notmatch $PolicyDefault) {
+                @('groups','host_groups').foreach{
+                  # Assign HostGroup
+                  if ($Policy.$_) { Submit-Group $Pair.Key $_ $Policy $Cid }
+                }
+                if ($Cid.enabled -ne $Policy.enabled) {
+                  # Enable/disable non-inherited policies
+                  [string]$Action = if ($Policy.enabled -eq $true) { 'enable' } else { 'disable' }
+                  $Req = Invoke-PolicyAction $Pair.Key $Action $Policy.id
+                  if ($Req) { Add-Result Modified $Req $Pair.Key enabled $Cid.enabled $Policy.enabled }
+                }
               }
             }
           }
