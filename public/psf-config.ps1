@@ -839,7 +839,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               if ($vNew -and $vNew.build -ne $Variant.build) {
                 # Replace build with current tagged version
                 Write-Log 'Import-FalconConfig' (
-                  'Replaced {0} variant "{0}" with "{1}" under policy "{3}"' -f $Variant.platform,$Variant.build,
+                  'Replaced {0} variant "{1}" with "{2}" under policy "{3}"' -f $Variant.platform,$Variant.build,
                   $vNew.build,$Item.name)
                 @('build','sensor_version','stage').foreach{ Set-Property $Variant $_ $vNew.$_ }
               } elseif (!$vNew) {
