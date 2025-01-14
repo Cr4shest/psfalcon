@@ -1358,6 +1358,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             $Item.type) items were found. Verify precedence!")
         }
       }
+      foreach ($Item in (@($Config.Result).Where({$_.type -eq 'FileVantagePolicy' -and $_.action -eq
+      'Modified' -and $_.property -eq 'rule_groups'}) | Select-Object id,type,platform,name -Unique)) {
+        if (!@($Config.Result).Where({$_.type -eq $Item.type -and $_.platform -eq $Item.platform -and $_.id -eq
+        $Item.id -and $_.action -eq 'Created'})) {
+          # Output warning for FileVantageRuleGroup precedence when groups were assigned to existing policies
+          $PSCmdlet.WriteWarning("[Import-FalconConfig] $($Item.platform) $($Item.type) '$(
+            $Item.name)' had pre-existing rule groups. Verify rule group precedence!")
+        }
+      }
     }
     if ($Config.Result) {
       # Output results to CSV
