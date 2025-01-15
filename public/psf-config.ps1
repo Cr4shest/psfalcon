@@ -256,19 +256,27 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     function Compare-ImportData ([string]$Item) {
       if ($Config.$Item.Cid) {
         $Platform = @{}
-        @('platform','platform_name').foreach{
-          if ($Config.$Item.Cid.$_) {
-            @($Config.$Item.Cid.$_ | Select-Object -Unique).foreach{ $Platform[$_] = @{} }
+        foreach ($Location in @('Cid','Import')) {
+          @('platform','platform_name').foreach{
+            # Check Cid and Import for 'platform' and 'platform_name'
+            if ($Config.$Item.$Location -and $Config.$Item.$Location.$_) {
+              @($Config.$Item.$Location.$_ | Select-Object -Unique).foreach{
+                # Create hashtable containing Cid and Import content by OS
+                if (!$Platform.$_) { $Platform[$_] = @{} }
+              }
+            }
           }
         }
         if ($Platform.Count -gt 0) {
           foreach ($Key in $Platform.Keys) {
             # Define properties for comparison between imported and existing items (by platform)
-            @('Cid','Import').foreach{
+            [string[]]$Available = @('Cid','Import').foreach{
               $Platform.$Key[$_] = @($Config.$Item.$_).Where({$_.platform -eq $Key -or $_.platform_name -eq $Key})
+              if ($Platform.$Key.$_) {
+                # Retreive property names from content under each OS
+                ($Platform.$Key.$_ | Get-Member -MemberType NoteProperty | Select-Object -Unique).Name
+              }
             }
-            [string[]]$Available = ($Platform.$Key.Cid | Get-Member -MemberType NoteProperty |
-              Select-Object -Unique).Name
             [string[]]$Compare = @('name','type','value').Where({$Available -contains $_})
             Write-Log 'Import-FalconConfig' "Evaluating $Key $Item using '$($Compare -join ',')'"
             $FilterScript = [scriptblock]::Create(
