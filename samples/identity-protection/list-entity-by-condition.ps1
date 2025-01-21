@@ -1,5 +1,5 @@
 #Requires -Version 5.1
-#using module @{ModuleName='PSFalcon';ModuleVersion ='2.2'}
+using module @{ModuleName='PSFalcon';ModuleVersion ='2.2'}
 <#
 .SYNOPSIS
 List entities matching a condition in Falcon Identity Protection
