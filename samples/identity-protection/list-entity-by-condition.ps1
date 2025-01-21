@@ -6,7 +6,7 @@ List entities matching a condition in Falcon Identity Protection
 .PARAMETER Condition
 Return results when this condition is true
 .EXAMPLE
-.\search-entity-by-condition.ps1 -Condition accountLocked
+.\list-entity-by-condition.ps1 -Condition accountLocked
 #>
 param(
   [Parameter(Mandatory,Position=1)]
