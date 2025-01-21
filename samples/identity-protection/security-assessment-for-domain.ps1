@@ -9,7 +9,7 @@ Configured domain name
 .\security-assessment-for-domain.ps1 -Domain example.com
 #>
 param(
-  [Parameter(Mandatory)]
+  [Parameter(Mandatory,Position=1)]
   [ValidateScript({
     # Retrieve list of configured domains and compare against input
     [string[]]$List = try {
