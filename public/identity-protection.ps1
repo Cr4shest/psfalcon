@@ -47,7 +47,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconIdentityGraph
     function Invoke-GraphLoop ($Object,$Splat,$UserInput) {
       $RegEx = @{
         # Patterns to validate statement for 'pageInfo' and 'Cursor' variable
-        CursorVariable = '^(\s+)?query\s+?\(.+Cursor'
+        CursorVariable = '^(\s+)?query(\s+)?\(.+Cursor'
         PageInfo = 'pageInfo(\s+)?{(\s+)?(hasNextPage([,\s]+)?|endCursor([,\s]+)?){2}(\s+)?}'
       }
       [string]$Message = if ($UserInput.query -notmatch $RegEx.CursorVariable) {
@@ -59,14 +59,13 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconIdentityGraph
         $PSCmdlet.WriteWarning(("[$($Splat.Command)]",$Message -join ' '))
       } else {
         do {
-          if ($Object.entities.pageInfo.endCursor) {
-            # Update 'Cursor' and repeat
+          if ($Object.entities.pageInfo.hasNextPage -eq $true -and $null -ne $Object.entities.pageInfo.endCursor) {
+            # Update 'Cursor' and repeat while 'hasNextPage' is true
             $UserInput = Assert-CursorVariable $UserInput $Object.entities.pageInfo.endCursor
             Write-GraphResult (Invoke-Falcon @Splat -UserInput $UserInput -OutVariable Object)
           }
         } while (
-          $Object.entities.pageInfo.hasNextPage -eq $true -and $null -ne
-            $Object.entities.pageInfo.endCursor
+          $Object.entities.pageInfo.hasNextPage -eq $true -and $null -ne $Object.entities.pageInfo.endCursor
         )
       }
     }
