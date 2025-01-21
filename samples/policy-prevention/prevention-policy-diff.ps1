@@ -35,6 +35,7 @@ process {
     if ($Ref.value -ne $Compare.value) {
       # If source and target settings do not match, output object
       [PSCustomObject]@{
+        cid = $Target.cid
         policy_id = $Target.id
         id = $Ref.id
         description = $Ref.description
