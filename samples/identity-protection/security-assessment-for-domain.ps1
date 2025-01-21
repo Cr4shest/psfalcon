@@ -2,7 +2,7 @@
 using module @{ModuleName='PSFalcon';ModuleVersion ='2.2'}
 <#
 .SYNOPSIS
-Retrieve Security Assessment for a given domain in Falcon Identity Protection
+Retrieve Security Assessment data for a configured domain in Falcon Identity Protection
 .PARAMETER Domain
 Configured domain name
 .EXAMPLE
