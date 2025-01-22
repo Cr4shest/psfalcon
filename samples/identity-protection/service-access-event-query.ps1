@@ -41,7 +41,7 @@ process {
       if ($Service) { $Message.Add(('Service "{0}"' -f ($Service -join ','))) }
       if ($Service -and $Protocol) { $Message.Add('and') }
       if ($Protocol) { $Message.Add(('Protocol "{0}"' -f ($Protocol -join ','))) }
-      Write-Error "$($Message -join ' ')."
+      throw "$($Message -join ' ')."
     }
   } catch {
     throw $_
