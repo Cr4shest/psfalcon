@@ -5,7 +5,8 @@ using module @{ModuleName='PSFalcon';ModuleVersion ='2.2'}
 List domains configured in Falcon Identity Protection
 #>
 try {
-  (Invoke-FalconIdentityGraph -String '{domains(dataSources:[])}').domains
+  $Request = Invoke-FalconIdentityGraph -String '{domains(dataSources:[])}'
+  if ($Request.domains) { $Request.domains } else { throw "No configured domains." }
 } catch {
   throw $_
 }
