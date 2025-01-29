@@ -662,7 +662,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallPlatform
   param(
     [Parameter(ParameterSetName='/fwmgr/entities/platforms/v1:get',Mandatory,ValueFromPipelineByPropertyName,
       ValueFromPipeline)]
-    [ValidateSet('0','1')]
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/platforms/v1:get',Position=1)]
