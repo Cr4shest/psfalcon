@@ -11,29 +11,23 @@ required properties defined by the 'Map' parameter.
 
 Converted rules used with 'New-FalconFirewallGroup' to create groups containing newly converted rules.
 .PARAMETER Map
-A hashtable containing the following keys with the corresponding CSV column or rule property as the value
+A hashtable containing the following keys with the corresponding CSV column or rule property name as the value. A
+default map will be used if one is not provided.
 
-Required: action, description, direction, enabled, local_address, local_port, name, protocol, remote_address,
-  remote_port
-Optional: image_name, network_location, service_name
+Mandatory: action, description, direction, enabled, local_address, name, protocol, remote_address
+Optional: fqdn, fqdn_enabled, image_name, local_port, network_location, remote_port, service_name
 .PARAMETER Path
 Path to a CSV file containing rules to convert
 .PARAMETER Object
-An existing rule object to convert
+A rule object to convert
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
 #>
   [CmdletBinding()]
   [OutputType([PSCustomObject[]])]
   param(
-    [Parameter(ParameterSetName='Pipeline',Mandatory,Position=1)]
-    [Parameter(ParameterSetName='CSV',Mandatory,Position=1)]
-    [ValidateScript({
-      foreach ($Key in @('action','description','direction','enabled','local_address','local_port','name',
-      'protocol','remote_address','remote_port')) {
-        if ($_.Keys -notcontains $Key) { throw "Missing required '$Key' property." } else { $true }
-      }
-    })]
+    [Parameter(ParameterSetName='Pipeline',Position=1)]
+    [Parameter(ParameterSetName='CSV',Position=1)]
     [hashtable]$Map,
     [Parameter(ParameterSetName='CSV',Mandatory,Position=2)]
     [ValidateScript({
@@ -49,13 +43,15 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
     [object]$Object
   )
   begin {
-    function Get-RuleAction ([object]$Rule,[hashtable]$Map) {
-      if ($Rule.($Map.action) -eq 'BLOCK') { 'DENY' } else { $Rule.($Map.action).ToUpper() }
+
+    function Get-RuleAction ([object]$Obj) {
+      # Convert 'BLOCK' to 'DENY', otherwise use capitalized 'action'
+      if ($Obj.($UserMap.action) -eq 'BLOCK') { 'DENY' } else { $Obj.($UserMap.action).ToUpper() }
     }
-    function Get-RuleDirection ([object]$Rule,[hashtable]$Map) {
-      try { [regex]::Match($Rule.($Map.direction),'^(in|out|both)',1).Value.ToUpper() } catch {}
+    function Get-RuleDirection ([object]$Obj) {
+      try { [regex]::Match($Obj.($UserMap.direction),'^(in|out|both)',1).Value.ToUpper() } catch {}
     }
-    function Get-RuleFamily ([object]$Rule,[hashtable]$Map,[string]$Protocol,[string[]]$TypeList) {
+    function Get-RuleFamily ([object]$Obj,[string]$Protocol,[string[]]$TypeList) {
       if ($Protocol -eq '1') {
         # Force 'IP4' when protocol is 'ICMPv4'
         'IP4'
@@ -68,15 +64,15 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         if ($Output) { ($Output).Trim() } else { 'IP4' }
       }
     }
-    function Get-RuleProtocol ([object]$Rule,[hashtable]$Map) {
-      if ($Rule.($Map.protocol) -match '^(any|\*)$') {
+    function Get-RuleProtocol ([object]$Obj) {
+      if ($Obj.($UserMap.protocol) -match $Regex.Any) {
         # Use asterisk for 'any'
         '*'
-      } elseif ($Rule.($Map.protocol) -as [int] -is [int]) {
+      } elseif ($Obj.($UserMap.protocol) -as [int] -is [int]) {
         # Use existing integer value
-        $Rule.($Map.protocol)
+        $Obj.($UserMap.protocol)
       } else {
-        switch ($Rule.($Map.protocol)) {
+        switch ($Obj.($UserMap.protocol)) {
           # Convert expected protocol names to their numerical value
           'icmpv4' { '1' }
           'tcp' { '6' }
@@ -85,11 +81,11 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         }
       }
     }
-    function New-RuleAddress ([string]$String,[hashtable]$Map,[string]$Join,[string]$RuleName) {
-      foreach ($Address in ($String -split $Join)) {
+    function New-RuleAddress ([string]$String,[string]$ObjName) {
+      foreach ($Address in ($String -split $Regex.Join)) {
         # Remove excess spaces
         [string]$Address = $Address.Trim()
-        if ($Address -match '^(any|\*)$') {
+        if ($Address -match $Regex.Any) {
           # Output 'any' address and netmask
           [PSCustomObject]@{ address = '*'; netmask = 0 }
         } else {
@@ -106,28 +102,33 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
             # Use default for ipv4 address
             32 
           } else {
-            throw "Rule '$RuleName' contains an address that does not match IPv4 or IPv6 pattern. ['$($Address)']"
+            throw "Rule '$ObjName' contains an address that does not match IPv4 or IPv6 pattern. ['$($Address)']"
           }
-          # Output object with address and netmask
-          if ($Address -and $Integer) { [PSCustomObject]@{ address = $Address; netmask = $Integer }}
+          if ($Address -and $Integer) {
+            # Output object with address and netmask
+            [PSCustomObject]@{ address = $Address; netmask = $Integer }
+          }
         }
       }
     }
-    function New-RuleField ([object]$Rule,[hashtable]$Map,[string]$Join) {
-      # Create default 'fields' array
-      [string[]]$Location = if ($Rule.($Map.network_location) -and ($Rule.($Map.network_location) -notmatch
-      '^(any|\*)$')) {
-        # Add 'network_location' values
-        @($Rule.($Map.network_location) -split $Join).foreach{ $_ }
-      } else {
-        'ANY'
+    function New-RuleField ([object]$Obj) {
+      # Create default 'fields' array containing 'network_location'
+      [PSCustomObject]@{
+        name = 'network_location'
+        type = 'set'
+        values = if ($Obj.($UserMap.network_location) -and $Obj.($UserMap.network_location).Trim() -notmatch
+        $Regex.Any) {
+          # Add 'network_location' values
+          @($Obj.($UserMap.network_location))
+        } else {
+          @('ANY')
+        }
       }
-      [PSCustomObject[]]([PSCustomObject]@{ name = 'network_location'; type = 'set'; values = $Location })
     }
-    function New-RulePort ([string]$String,[string]$Join) {
-      if ($String -notmatch '^(any|\*)$') {
+    function New-RulePort ([string]$String) {
+      if ($String -notmatch $Regex.Any) {
         # Create 'port' objects
-        @($String -split $Join).foreach{
+        @($String -split $Regex.Join).foreach{
           if ($_ -match '-') {
             # Split ranges into 'start' and 'end'
             [int[]]$Range = $_ -split '-',2
@@ -139,94 +140,84 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         }
       }
     }
-    function Convert-RuleObject ([object]$Rule,[hashtable]$Map) {
+    function Convert-RuleObject ([object]$Obj) {
       # Set RegEx pattern to split port/address strings and create object string for error messaging
-      [string]$Join = '[;,-]'
       try {
-        [string]$Protocol = Get-RuleProtocol $Rule $Map
+        [string]$Protocol = Get-RuleProtocol $Obj
         if (!$Protocol) {
-          throw "Rule '$($Rule.($Map.name))' contains unexpected protocol '$($Rule.($Map.protocol))'."
+          throw "Rule '$($Obj.($UserMap.name))' contains unexpected protocol '$($Obj.($UserMap.protocol))'."
         }
         [string[]]$TypeList = foreach ($Type in ('local_address','remote_address')) {
-          @($Rule.($Map.$Type) -split $Join).foreach{
-            if ($_.Trim() -match '^(any|\*)$') {
+          @($Obj.($UserMap.$Type) -split $Regex.Join).foreach{
+            if ($_.Trim() -match $Regex.Any) {
               'ANY'
             } else {
               # Error when 'local_address' or 'remote_address' does not match ipv4/ipv6
               [string]$Trim = ($_.Trim() -replace '/\d+$',$null)
-              if (!$Trim) { throw "Rule '$($Rule.($Map.name))' missing value for required property '$Type'." }
+              if (!$Trim) { throw "Rule '$($Obj.($UserMap.name))' missing value for required property '$Type'." }
               [string]$Test = Test-RegexValue $Trim
               if ($Test -match '^ipv(4|6)$') {
                 [string]($Test -replace 'v',$null).ToUpper()
               } else {
-                throw "Rule '$($Rule.($Map.name))' contains unexpected $Type '$Trim'."
+                throw "Rule '$($Obj.($UserMap.name))' contains unexpected $Type '$Trim'."
               }
             }
           }
         }
         if ($TypeList -contains 'IP4' -and $TypeList -contains 'IP6') {
           # Error when rules contain both ipv4 and ipv6 addresses
-          throw "Rule '$($Rule.($Map.name))' contains both ipv4 and ipv6 addresses."
+          throw "Rule '$($Obj.($UserMap.name))' contains both ipv4 and ipv6 addresses."
         } else {
           foreach ($Name in ('action','address_family','direction')) {
             # Set 'action', 'family' and 'direction'
             $Value = if ($Name -eq 'address_family') {
-              Get-RuleFamily $Rule $Map $Protocol $TypeList
+              Get-RuleFamily $Obj $Protocol $TypeList
             } else {
-              & "Get-Rule$Name" $Rule $Map
+              & "Get-Rule$Name" $Obj
             }
             if ($Name -eq 'address_family' -and $Value -cnotmatch '^IP[4|6]$') {
               # Error when unexpected value is provided
-              throw "Unable to determine $Name for rule '$($Rule.($Map.name))'."
+              throw "Unable to determine $Name for rule '$($Obj.($UserMap.name))'."
             } elseif (($Name -eq 'action' -and $Value -cnotmatch '^(ALLOW|DENY)$') -or
             ($Name -eq 'direction' -and $Value -cnotmatch '^(BOTH|IN|OUT)$')) {
-              throw "Rule '$($Rule.($Map.name))' contains unexpected $Name '$($Rule.($Map.$Name))'."
+              throw "Rule '$($Obj.($UserMap.name))' contains unexpected $Name '$($Obj.($UserMap.$Name))'."
             } else {
               New-Variable -Name $Name -Value $Value
             }
           }
-          @('local_address','remote_address').foreach{
-            # Create 'local_address' and 'remote_address' objects
-            New-Variable -Name $_ -Value ([PSCustomObject[]](
-              New-RuleAddress $Rule.($Map.$_) $Map $Join $Rule.($Map.name)))
-          }
-          # Construct default 'fields'
-          [PSCustomObject[]]$Field = New-RuleField $Rule $Map
-          foreach ($Name in ('image_name','service_name')) {
-            # Add 'image_name' and 'service_name' to 'fields', when present
-            if ($Rule.($Map.$Name) -and $Rule.($Map.$Name) -notmatch '^(any|\*)$') {
-              [string]$Value = if ($Name -eq 'image_name' -and $Rule.($Map.$Name) -notmatch '\.\w+$') {
-                # Convert directory paths to glob syntax with a single asterisk
-                [string]$Glob = $Rule.($Map.$Name) -replace '^\w:\\',$null
-                if ($Glob -match '\\$') { [string]::Concat($Glob,'*') } else { $Glob,'*' -join '\' }
-              } else {
-                $Rule.($Map.$Name)
-              }
-              $Field += [PSCustomObject]@{
-                name = $Name
-                type = if ($_ -eq 'image_name') { 'windows_path' } else { 'string' }
-                value = $Value
-              }
-            }
-          }
-          # Create rule object
+          # Output rule object
           $Output = [PSCustomObject]@{
             action = $action
             address_family = $address_family
-            description = $Rule.($Map.description)
+            description = $Obj.($UserMap.description)
             direction = $direction
-            enabled = if ($Rule.($Map.enabled) -match '$?true') { $true } else { $false }
-            fields = $Field
-            name = $Rule.($Map.name)
+            enabled = if ($Obj.($UserMap.enabled) -match '$?true') { $true } else { $false }
+            fields = [System.Collections.Generic.List[PSCustomObject]]@()
+            fqdn = if ($Obj.($UserMap.fqdn)) { $Obj.($UserMap.fqdn) } else { '' }
+            fqdn_enabled = if ($Obj.($UserMap.fqdn_enabled) -match '$?true') { $true } else { $false }
+            local_address = @(New-RuleAddress $Obj.($UserMap.local_address) $Obj.($UserMap.name))
+            local_port = @(New-RulePort $Obj.($UserMap.local_port))
+            name = $Obj.($UserMap.name)
             protocol = $Protocol
-            local_address = $local_address
-            remote_address = $remote_address
+            remote_address = @(New-RuleAddress $Obj.($UserMap.remote_address) $Obj.($UserMap.name))
+            remote_port = @(New-RulePort $Obj.($UserMap.remote_port))
           }
-          @('local_port','remote_port').foreach{
-            # Add 'local_port' and 'remote_port'
-            New-Variable -Name $_ -Value ([PSCustomObject[]](New-RulePort $Rule.($Map.$_) $Join))
-            if ((Get-Variable -Name $_).Value) {
-              $Output.PSObject.Properties.Add((New-Object PSNoteProperty($_,(Get-Variable -Name $_).Value)))
+          $Output.fields.Add((New-RuleField $Obj))
+          foreach ($Name in ('image_name','service_name')) {
+            # Add 'image_name' and 'service_name' to 'fields', when present
+            if ($Obj.($UserMap.$Name) -and $Obj.($UserMap.$Name).Trim() -notmatch $Regex.Any) {
+              [string]$Value = if ($Name -eq 'image_name' -and $Obj.($UserMap.$Name) -notmatch '\.\w+$') {
+                # Convert directory paths to glob syntax with a single asterisk
+                [string]$Glob = $Obj.($UserMap.$Name) -replace '^\w:\\',$null
+                if ($Glob -match '\\$') { [string]::Concat($Glob,'*') } else { $Glob,'*' -join '\' }
+              } else {
+                $Obj.($UserMap.$Name)
+              }
+              $Output.fields.Add(([PSCustomObject]@{
+                name = $Name
+                type = if ($_ -eq 'image_name') { 'windows_path' } else { 'string' }
+                value = $Value
+              }))
             }
           }
           $Output
@@ -235,13 +226,54 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         throw $_
       }
     }
+    # Properties evaluated for rule creation
+    [string[]]$Mandatory = 'action','description','direction','enabled','local_address','name','protocol',
+      'remote_address'
+    [string[]]$Optional = 'fqdn','fqdn_enabled','image_name','local_port','network_location','remote_port',
+      'service_name'
+    $Regex = @{
+      # Regex patterns to use when checking rule content
+      Any = '^(any|\*)$'
+      Join = '[;,-]'
+    }
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
-    # Convert pipeline object into formatted rule
-    if (!$Path) { Convert-RuleObject ([PSCustomObject]$Object | Select-Object @($Map.Values)) $Map }
+    # Verify object properties against Map
+    if ($PSCmdlet.ParameterSetName -eq 'Pipeline') {
+      # Capture object for rule creation
+      @($Object).foreach{ $List.Add($_) }
+    } else {
+      # Import CSV and convert rules
+      if ($PSBoundParameters.Map) {
+        Import-Csv $Path | & $MyInvocation.MyCommand.Name -Map $PSBoundParameters.Map
+      } else {
+        Import-Csv $Path | & $MyInvocation.MyCommand.Name
+      }
+    }
   }
   end {
-    # Import CSV and convert rules to expected format
-    if ($Path) { Import-Csv $Path | & $MyInvocation.MyCommand.Name -Map $Map }
+    if ($List) {
+      if ($PSBoundParameters.Map) {
+        $UserMap = try { $PSBoundParameters.Map.Clone() } catch { throw $_ }
+      } else {
+        # Generate default 'Map' values
+        $UserMap = @{}
+        @($Mandatory + $Optional).foreach{ $UserMap[$_] = $_ }
+      }
+      @($UserMap.Keys).foreach{
+        if (!($Mandatory -contains $_ -or $Optional -contains $_)) {
+          # Remove keys not defined by 'Mandatory' or 'Optional'
+          Write-Log 'ConvertTo-FalconFirewallRule' ('Removed unexpected Map property "{0}"' -f $_)
+          [void]$UserMap.Remove($_)
+        }
+      }
+      @($Mandatory).Where({$UserMap.Keys -notcontains $_}).foreach{
+        # Error if Map is missing mandatory property
+        throw "Map missing mandatory property '$_'!"
+      }
+      # Convert object using Map-defined properties
+      @($List).foreach{ Convert-RuleObject ([PSCustomObject]$_ | Select-Object ([string[]]$UserMap.Values)) }
+    }
   }
 }
