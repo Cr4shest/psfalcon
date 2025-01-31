@@ -830,6 +830,8 @@ Requires 'Firewall management: Write'.
 Rule group name
 .PARAMETER Enabled
 Rule group status
+.PARAMETER Platform
+Operating system platform [default: windows]
 .PARAMETER Description
 Rule group description
 .PARAMETER Rule
@@ -840,8 +842,6 @@ Audit log comment
 Clone default Firewall rules
 .PARAMETER CloneId
 Clone an existing rule group
-.PARAMETER Platform
-Operating system platform [default: 0 (Windows)]
 .PARAMETER Validate
 Toggle to perform validation, instead of creating rule group
 .LINK
@@ -859,31 +859,32 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconFirewallGroup
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory,
       ValueFromPipelineByPropertyName,Position=2)]
     [boolean]$Enabled,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=3)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Mandatory,ValueFromPipelineByPropertyName,
       Position=3)]
-    [string]$Description,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=3)]
+    [string]$Platform,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=4)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
       Position=4)]
-    [Alias('rules')]
-    [object[]]$Rule,
+    [string]$Description,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=5)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
       Position=5)]
+    [Alias('rules')]
+    [object[]]$Rule,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=6)]
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
+      Position=6)]
     [string]$Comment,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=6)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=6)]
-    [string]$Library,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=7)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=7)]
+    [string]$Library,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=8)]
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=8)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('clone_id','id')]
     [string]$CloneId,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=8)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
-      Position=8)]
-    [string]$Platform,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory)]
     [switch]$Validate
   )
