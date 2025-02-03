@@ -24,7 +24,7 @@ A rule object to convert
 https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
 #>
   [CmdletBinding()]
-  [OutputType([PSCustomObject[]])]
+  [OutputType([hashtable[]])]
   param(
     [Parameter(ParameterSetName='Pipeline',Position=1)]
     [Parameter(ParameterSetName='CSV',Position=1)]
@@ -87,7 +87,7 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         [string]$Address = $Address.Trim()
         if ($Address -match $Regex.Any) {
           # Output 'any' address and netmask
-          [PSCustomObject]@{ address = '*'; netmask = 0 }
+          @{ address = '*'; netmask = 0 }
         } else {
           # Check whether address matches ipv4 or ipv6
           [string]$Type = Test-RegexValue ($Address -replace '/\d+$',$null)
@@ -106,22 +106,22 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
           }
           if ($Address -and $Integer) {
             # Output object with address and netmask
-            [PSCustomObject]@{ address = $Address; netmask = $Integer }
+            @{ address = $Address; netmask = $Integer }
           }
         }
       }
     }
     function New-RuleField ([object]$Obj) {
       # Create default 'fields' array containing 'network_location'
-      [PSCustomObject]@{
+      @{
         name = 'network_location'
         type = 'set'
         values = if ($Obj.($UserMap.network_location) -and $Obj.($UserMap.network_location).Trim() -notmatch
         $Regex.Any) {
           # Add 'network_location' values
-          @($Obj.($UserMap.network_location))
+          ,@(($Obj.($UserMap.network_location) -split $Regex.Join).Trim())
         } else {
-          @('ANY')
+          ,@('ANY')
         }
       }
     }
@@ -132,10 +132,10 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
           if ($_ -match '-') {
             # Split ranges into 'start' and 'end'
             [int[]]$Range = $_ -split '-',2
-            [PSCustomObject]@{ start = $Range[0]; end = $Range[1] }
+            @{ start = $Range[0]; end = $Range[1] }
           } else {
             # Create separate objects for each value when multiple are provided
-            [PSCustomObject]@{ start = [int]$_; end = 0 }
+            @{ start = [int]$_; end = 0 }
           }
         }
       }
@@ -186,13 +186,13 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
             }
           }
           # Output rule object
-          $Output = [PSCustomObject]@{
+          $Output = @{
             action = $action
             address_family = $address_family
             description = $Obj.($UserMap.description)
             direction = $direction
             enabled = if ($Obj.($UserMap.enabled) -match '$?true') { $true } else { $false }
-            fields = [System.Collections.Generic.List[PSCustomObject]]@()
+            fields = [System.Collections.Generic.List[hashtable]]@()
             fqdn = if ($Obj.($UserMap.fqdn)) { $Obj.($UserMap.fqdn) } else { '' }
             fqdn_enabled = if ($Obj.($UserMap.fqdn_enabled) -match '$?true') { $true } else { $false }
             local_address = @(New-RuleAddress $Obj.($UserMap.local_address) $Obj.($UserMap.name))
@@ -213,7 +213,7 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
               } else {
                 $Obj.($UserMap.$Name)
               }
-              $Output.fields.Add(([PSCustomObject]@{
+              $Output.fields.Add((@{
                 name = $Name
                 type = if ($_ -eq 'image_name') { 'windows_path' } else { 'string' }
                 value = $Value
@@ -236,7 +236,7 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
       Any = '^(any|\*)$'
       Join = '[;,-]'
     }
-    [System.Collections.Generic.List[PSCustomObject]]$List = @()
+    [System.Collections.Generic.List[object]]$List = @()
   }
   process {
     # Verify object properties against Map
@@ -273,7 +273,7 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
         throw "Map missing mandatory property '$_'!"
       }
       # Convert object using Map-defined properties
-      @($List).foreach{ Convert-RuleObject ([PSCustomObject]$_ | Select-Object ([string[]]$UserMap.Values)) }
+      @($List).foreach{ Convert-RuleObject ($_ | Select-Object ([string[]]$UserMap.Values)) }
     }
   }
 }
