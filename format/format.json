@@ -131,11 +131,13 @@
           "account_type",
           "behavior_assessment_enabled",
           "cloudtrail_region",
+          "deployment_method",
           "dspm_enabled",
           "dspm_role",
           "iam_role_arn",
           "is_master",
           "organization_id",
+          "root_stack_id",
           "sensor_management_enabled",
           "target_ous",
           "use_existing_cloudtrail"
@@ -154,12 +156,14 @@
           "account_id",
           "behavior_assessment_enabled",
           "cloudtrail_region",
+          "deployment_method",
           "dspm_enabled",
           "dspm_role",
           "environment",
           "iam_role_arn",
           "remediation_region",
           "remediation_tou_accepted",
+          "root_stack_id",
           "sensor_management_enabled",
           "target_ous"
         ]
@@ -236,9 +240,7 @@
   "/cloud-connect-cspm-azure/entities/download-certificate/v1": {
     "get": {
       "query": [
-        "tenant_id",
-        "refresh",
-        "years_valid"
+        "tenant_id"
       ]
     }
   },
@@ -5621,6 +5623,16 @@
     }
   },
   "/workflows/combined/activities/v1": {
+    "get": {
+      "query": [
+        "filter",
+        "offset",
+        "limit",
+        "sort"
+      ]
+    }
+  },
+  "/workflows/combined/activity-content/v1": {
     "get": {
       "query": [
         "filter",
