@@ -89,7 +89,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconWorkflow
     [string[]]$Id,
     [Parameter(ParameterSetName='/workflows/combined/definitions/v1:get',Position=1)]
     [Parameter(ParameterSetName='/workflows/combined/executions/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/workflows/combined/definitions/v1:get',Position=2)]
     [Parameter(ParameterSetName='/workflows/combined/executions/v1:get',Position=2)]
@@ -149,7 +149,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconWorkflowAction
   [CmdletBinding(DefaultParameterSetName='/workflows/combined/activities/v1:get',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/workflows/combined/activities/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/workflows/combined/activities/v1:get',Position=2)]
     [string]$Sort,
@@ -210,7 +210,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconWorkflowTrigger
   [CmdletBinding(DefaultParameterSetName='/workflows/combined/triggers/v1:get',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/workflows/combined/triggers/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter
   )
   begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}

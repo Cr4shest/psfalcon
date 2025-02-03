@@ -92,7 +92,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallPolicy
     [string[]]$Id,
     [Parameter(ParameterSetName='/policy/combined/firewall/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/firewall/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/firewall/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/firewall/v1:get',Position=2)]
@@ -176,7 +176,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallPolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/queries/firewall-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/combined/firewall-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/firewall-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/combined/firewall-members/v1:get',Position=3)]

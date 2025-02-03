@@ -31,7 +31,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentState
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/device-content/queries/states/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/device-content/queries/states/v1:get',Position=2)]
     [string]$Sort,

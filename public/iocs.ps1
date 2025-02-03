@@ -169,7 +169,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconIoc
     [string[]]$Id,
     [Parameter(ParameterSetName='/iocs/queries/indicators/v1:get',Position=1)]
     [Parameter(ParameterSetName='/iocs/combined/indicator/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/iocs/queries/indicators/v1:get',Position=2)]
     [Parameter(ParameterSetName='/iocs/combined/indicator/v1:get',Position=2)]
@@ -490,7 +490,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconIoc
   [CmdletBinding(DefaultParameterSetName='/iocs/entities/indicators/v1:delete',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='Filter',Mandatory)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:delete',Position=1)]
     [Parameter(ParameterSetName='Filter',Position=2)]

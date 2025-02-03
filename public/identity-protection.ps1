@@ -126,7 +126,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconIdentityHost
     [Alias('ids','device_id','host_ids','aid')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/identity-protection/queries/devices/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/identity-protection/queries/devices/v1:get',Position=2)]
     [string]$Sort,

@@ -93,7 +93,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentPolicy
     [string[]]$Id,
     [Parameter(ParameterSetName='/policy/combined/content-update/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/content-update/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/content-update/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/content-update/v1:get',Position=2)]
@@ -166,7 +166,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentPolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/combined/content-update-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/content-update-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/content-update-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/queries/content-update-members/v1:get',Position=3)]

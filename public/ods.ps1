@@ -69,7 +69,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconScan
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/ods/queries/scans/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/ods/queries/scans/v1:get',Position=2)]
     [ValidateSet('id|asc','id|desc','initiated_from|asc','initiated_from|desc','description.keyword|asc',
@@ -162,7 +162,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconScanFile
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [string]$ScanId,
     [Parameter(ParameterSetName='/ods/queries/malicious-files/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/ods/queries/malicious-files/v1:get',Position=2)]
     [Parameter(ParameterSetName='filter_by_scan_id')]
@@ -245,7 +245,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconScanHost
     [Alias('ids','scan_host_metadata_id')]
     [object[]]$Id,
     [Parameter(ParameterSetName='/ods/queries/scan-hosts/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/ods/queries/scan-hosts/v1:get',Position=2)]
     [ValidateSet('id|asc','id|desc','scan_id|asc','scan_id|desc','host_id|asc','host_id|desc',
@@ -319,7 +319,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconScheduledScan
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/ods/queries/scheduled-scans/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/ods/queries/scheduled-scans/v1:get',Position=2)]
     [ValidateSet('id|asc','id|desc','description.keyword|asc','description.keyword|desc','status|asc',
@@ -503,7 +503,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconScheduledScan
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='Filter',Mandatory)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter
   )
   begin {

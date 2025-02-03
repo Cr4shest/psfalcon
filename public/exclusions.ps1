@@ -123,7 +123,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCertificateExclusion
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/exclusions/queries/cert-based-exclusions/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/exclusions/queries/cert-based-exclusions/v1:get',Position=2)]
     [ValidateSet('created_by.asc','created_by.desc','created_on.asc','created_on.desc','modified_by.asc',

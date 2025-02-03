@@ -37,7 +37,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconAlert
     [Alias('include_hidden')]
     [boolean]$IncludeHidden,
     [Parameter(ParameterSetName='/alerts/queries/alerts/v2:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/alerts/queries/alerts/v2:get',Position=2)]
     [Alias('q')]

@@ -128,7 +128,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconRole
     [Alias('direct_only')]
     [boolean]$DirectOnly,
     [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=3)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=4)]
     [ValidateSet('cid|asc','cid|desc','role_name|asc','role_name|desc','type|asc','type|desc',IgnoreCase=$false)]
@@ -208,7 +208,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconUser
     [Alias('ids','uuid')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/user-management/queries/users/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/user-management/queries/users/v1:get',Position=2)]
     [ValidateSet('first_name|asc','first_name|desc','last_name|asc','last_name|desc','name|asc','name|desc',

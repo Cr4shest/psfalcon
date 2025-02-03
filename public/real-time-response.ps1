@@ -256,7 +256,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconLibraryScript
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/real-time-response/queries/falcon-scripts/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/real-time-response/queries/falcon-scripts/v1:get',Position=2)]
     [ValidateSet('modified_timestamp.asc','modified_timestamp.desc','name.asc','name.desc',IgnoreCase=$false)]
@@ -320,7 +320,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconPutFile
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/real-time-response/queries/put-files/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/real-time-response/queries/put-files/v1:get',Position=2)]
     [string]$Sort,
@@ -384,7 +384,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconScript
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/real-time-response/queries/scripts/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/real-time-response/queries/scripts/v1:get',Position=2)]
     [string]$Sort,
@@ -462,7 +462,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSession
     [string[]]$Id,
     [Parameter(ParameterSetName='/real-time-response/queries/sessions/v1:get',Position=1)]
     [Parameter(ParameterSetName='/real-time-response-audit/combined/sessions/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/real-time-response/queries/sessions/v1:get',Position=2)]
     [Parameter(ParameterSetName='/real-time-response-audit/combined/sessions/v1:get',Position=2)]

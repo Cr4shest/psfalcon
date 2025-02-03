@@ -400,7 +400,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallEvent
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/events/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/events/v1:get',Position=2)]
     [Alias('q')]
@@ -531,7 +531,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallGroup
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/rule-groups/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/rule-groups/v1:get',Position=2)]
     [Alias('q')]
@@ -603,7 +603,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallLocation
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/network-locations/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/network-locations/v1:get',Position=2)]
     [Alias('q')]
@@ -732,7 +732,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallRule
     [string]$PolicyId,
     [Parameter(ParameterSetName='/fwmgr/queries/policy-rules/v1:get',Position=2)]
     [Parameter(ParameterSetName='/fwmgr/queries/rules/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/policy-rules/v1:get',Position=3)]
     [Parameter(ParameterSetName='/fwmgr/queries/rules/v1:get',Position=2)]

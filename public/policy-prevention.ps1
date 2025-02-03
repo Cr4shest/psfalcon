@@ -102,7 +102,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconPreventionPolicy
     [string[]]$Id,
     [Parameter(ParameterSetName='/policy/combined/prevention/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/prevention/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/prevention/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/prevention/v1:get',Position=2)]
@@ -182,7 +182,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconPreventionPolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/queries/prevention-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/combined/prevention-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/prevention-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/combined/prevention-members/v1:get',Position=3)]

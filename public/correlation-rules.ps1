@@ -33,7 +33,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
     [string[]]$Id,
     [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=1)]
     [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=2)]
     [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=2)]

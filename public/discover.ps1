@@ -61,7 +61,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconAsset
     [Parameter(ParameterSetName='/discover/queries/iot-hosts/v2:get',Position=1)]
     [Parameter(ParameterSetName='/discover/queries/logins/v1:get',Position=1)]
     [Parameter(ParameterSetName='/fem/queries/external-assets/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/discover/combined/applications/v1:get',Position=2)]
     [Parameter(ParameterSetName='/discover/combined/hosts/v1:get',Position=2)]

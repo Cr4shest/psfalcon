@@ -120,7 +120,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconKernel
     [string]$Field,
     [Parameter(ParameterSetName='/policy/combined/sensor-update-kernels/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/sensor-update-kernels/{distinct-field}/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/sensor-update-kernels/{distinct-field}/v1:get',Position=3)]
     [ValidateSet('architecture.asc','architecture.desc','distro.asc','distro.desc','distro_version.asc',
@@ -189,7 +189,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSensorUpdatePolicy
     [string[]]$Id,
     [Parameter(ParameterSetName='/policy/combined/sensor-update/v2:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/sensor-update/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/sensor-update/v2:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/sensor-update/v1:get',Position=2)]
@@ -269,7 +269,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSensorUpdatePolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/queries/sensor-update-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/combined/sensor-update-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/sensor-update-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/combined/sensor-update-members/v1:get',Position=3)]

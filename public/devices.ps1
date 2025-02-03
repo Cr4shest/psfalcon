@@ -130,7 +130,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
     [string[]]$Id,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=1)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=2)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=2)]
@@ -327,7 +327,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHostGroup
     [string[]]$Id,
     [Parameter(ParameterSetName='/devices/queries/host-groups/v1:get',Position=1)]
     [Parameter(ParameterSetName='/devices/combined/host-groups/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/devices/queries/host-groups/v1:get',Position=2)]
     [Parameter(ParameterSetName='/devices/combined/host-groups/v1:get',Position=2)]
@@ -406,7 +406,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHostGroupMember
     [string]$Id,
     [Parameter(ParameterSetName='/devices/queries/host-group-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/devices/combined/host-group-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/devices/queries/host-group-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/devices/combined/host-group-members/v1:get',Position=3)]

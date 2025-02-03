@@ -152,7 +152,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDeviceControlPolicy
     [string[]]$Id,
     [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=2)]
@@ -234,7 +234,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDeviceControlPolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/queries/device-control-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/combined/device-control-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/device-control-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/combined/device-control-members/v1:get',Position=3)]
