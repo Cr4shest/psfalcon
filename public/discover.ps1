@@ -189,10 +189,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconAsset
         }
       }
     }
-    $Request = if ($Include -contains 'login_event' -and !$PSBoundParameters.Detailed -and !$Account) {
+    $Request = if ($PSBoundParameters.Include -contains 'login_event' -and !$PSBoundParameters.Detailed -and
+    !$PSBoundParameters.Account) {
       $PSBoundParameters['Detailed'] = $true
       Invoke-Falcon @Param -UserInput $PSBoundParameters | Select-Object id,aid
-    } elseif ($Detailed -and ($Account -or $External -or $IoT -or $Login)) {
+    } elseif ($PSBoundParameters.Detailed -and ($PSBoundParameters.Account -or $PSBoundParameters.External -or
+    $PSBoundParameters.IoT -or $PSBoundParameters.Login)) {
       # Re-submit 'id' values to appropriate /entities/ API to retrieve detail
       [void]$PSBoundParameters.Remove('Detailed')
       $IdList = Invoke-Falcon @Param -UserInput $PSBoundParameters
@@ -216,7 +218,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconAsset
       for ($i=0; $i -lt ($Request | Measure-Object).Count; $i+=100) {
         # In groups of 100, perform filtered search for login events
         [string[]]$Group = @(@($Request)[$i..($i+99)]).Where({![string]::IsNullOrEmpty($_.$ReqId)}).$ReqId
-        Write-Host ($Group -join ',')
         [string[]]$Filter = @($Group).foreach{ $Property,"'$_'" -join ':' }
         $Content = & $MyInvocation.MyCommand.Name -Filter ($Filter -join ',') -Login -Detailed -All -EA 0
         foreach ($Value in $Group) {
