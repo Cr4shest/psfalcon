@@ -387,28 +387,34 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         $NewArr = $New.settings
         $OldArr = $Old.settings
         if ($OldArr -or $Result) {
-          foreach ($Item in $NewArr) {
-            if ($Item.value.PSObject.Properties.Name -eq 'enabled') {
-              if ($OldArr.Where({$_.id -eq $Item.id}).value.enabled -ne $Item.value.enabled) {
+          foreach ($i in $NewArr) {
+            if ($i.value.PSObject.Properties.Name -eq 'enabled') {
+              if ($OldArr.Where({$_.id -eq $i.id}).value.enabled -ne $i.value.enabled) {
                 if ($Result) {
                   # Capture modified result for boolean settings
-                  Add-Result Modified $New $Item $Item.id $OldArr.Where({$_.id -eq
-                    $Item.id}).value.enabled $Item.value.enabled
+                  Add-Result Modified $New $Item $i.id $OldArr.Where({$_.id -eq
+                    $i.id}).value.enabled $i.value.enabled
                 } else {
                   # Output setting to be modified
-                  $Item | Select-Object id,value
+                  Write-Log 'Compare-Setting' (($Item,$New.id -join ': '),([PSCustomObject]@{id=$i.id;old=(
+                    $OldArr.Where({$_.id -eq $i.id}).value | ConvertTo-Json -Compress);new=($i.value |
+                    ConvertTo-Json -Compress)} | Format-List | Out-String).Trim() -join "`n")
+                  $i | Select-Object id,value
                 }
               }
             } else {
-              foreach ($Name in $Item.value.PSObject.Properties.Name) {
-                if ($OldArr.Where({$_.id -eq $Item.id}).value.$Name -ne $Item.value.$Name) {
+              foreach ($n in $i.value.PSObject.Properties.Name) {
+                if ($OldArr.Where({$_.id -eq $i.id}).value.$n -ne $i.value.$n) {
                   if ($Result) {
                     # Capture modified result for sub-settings
-                    Add-Result Modified $New $Item ($Item.id,$Name -join ':') @($OldArr).Where({$_.id -eq
-                      $Item.id }).value.$Name $Item.value.$Name
+                    Add-Result Modified $New $Item ($i.id,$v -join ':') @($OldArr).Where({$_.id -eq
+                      $i.id}).value.$v $Item.value.$v
                   } else {
                     # Output setting to be modified
-                    $Item | Select-Object id,value
+                    Write-Log 'Compare-Setting' (($Item,$New.id -join ': '),([PSCustomObject]@{id=$i.id;old=(
+                      $OldArr.Where({$_.id -eq $i.id}).value | ConvertTo-Json -Compress);new=($i.value |
+                      ConvertTo-Json -Compress)} | Format-List | Out-String).Trim() -join "`n")
+                    $i | Select-Object id,value
                   }
                 }
               }
