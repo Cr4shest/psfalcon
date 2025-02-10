@@ -1,4 +1,16 @@
 {
+  "/alerts/combined/alerts/v1": {
+    "post": {
+      "body": {
+        "root": [
+          "after",
+          "filter",
+          "limit",
+          "sort"
+        ]
+      }
+    }
+  },
   "/alerts/entities/alerts/v2": {
     "post": {
       "body": {
