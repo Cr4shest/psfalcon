@@ -1,3 +1,80 @@
+function Edit-FalconCorrelationRule {
+<#
+.SYNOPSIS
+Modify Falcon NGSIEM correlation rules
+.DESCRIPTION
+Requires 'Correlation Rules: Write'.
+.PARAMETER Id
+Correlation rule identifier
+.PARAMETER Name
+Correlation rule name
+.PARAMETER Description
+Correlation rule description
+.PARAMETER Tactic
+MITRE ATT&CK tactic identifier
+.PARAMETER Technique
+MITRE ATT&CK technique identifier
+.PARAMETER Severity
+Correlation rule severity
+.PARAMETER Search
+Search properties ('filter', 'lookback', 'outcome', 'trigger_mode')
+.PARAMETER Operation
+Operation properties ('schedule', 'start_on', 'stop_on')
+.PARAMETER Status
+Correlation rule status
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
+#>
+  [CmdletBinding(DefaultParameterSetName='/correlation-rules/entities/rules/v1:patch',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',Mandatory,
+      ValueFromPipelineByPropertyName,ValueFromPipeline,Position=1)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [string]$Id,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=2)]
+    [string]$Name,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=3)]
+    [string]$Description,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=4)]
+    [ValidatePattern('^TA\d{4}$')]
+    [string]$Tactic,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=5)]
+    [ValidatePattern('^T\d{4}$')]
+    [string]$Technique,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=6)]
+    [ValidateSet(10,30,50,70,90)]
+    [int32]$Severity,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=7)]
+    [object]$Search,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=8)]
+    [object]$Operation,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=9)]
+    [ValidateSet('active','inactive',IgnoreCase=$false)]
+    [string]$Status
+  )
+  begin {
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
+    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
+  }
+  process {
+    @('search','operation').foreach{
+      if ($PSBoundParameters.$_) {
+        # Add 'search' and 'operation' to 'root' list in Format
+        [void]$Param.Format.Body.Remove($_)
+        $Param.Format.Body.root += $_
+      }
+    }
+    Invoke-Falcon @Param -UserInput $PSBoundParameters
+  }
+}
 function Get-FalconCorrelationRule {
 <#
 .SYNOPSIS
@@ -29,6 +106,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
   param(
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:get',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=1)]
@@ -72,6 +150,94 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
     }
   }
 }
+function New-FalconCorrelationRule {
+<#
+.SYNOPSIS
+Create Falcon NGSIEM correlation rules
+.DESCRIPTION
+Requires 'Correlation Rules: Write'.
+.PARAMETER Name
+Correlation rule name
+.PARAMETER Description
+Correlation rule description
+.PARAMETER Cid
+Customer identifier
+.PARAMETER Tactic
+MITRE ATT&CK tactic identifier
+.PARAMETER Technique
+MITRE ATT&CK technique identifier
+.PARAMETER Severity
+Correlation rule severity
+.PARAMETER Search
+Search properties ('filter', 'lookback', 'outcome', 'trigger_mode')
+.PARAMETER Operation
+Operation properties ('schedule', 'start_on', 'stop_on')
+.PARAMETER Status
+Correlation rule status
+.PARAMETER TriggerOnCreate
+Trigger correlation rule upon creation
+.PARAMETER Comment
+Audit log comment
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
+#>
+  [CmdletBinding(DefaultParameterSetName='/correlation-rules/entities/rules/v1:post',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=1)]
+    [string]$Name,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=2)]
+    [string]$Description,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=3)]
+    [Alias('customer_id')]
+    [ValidatePattern('^[a-fA-F0-9]{32}(-\w{2})?$')]
+    [string]$Cid,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=4)]
+    [ValidatePattern('^TA\d{4}$')]
+    [string]$Tactic,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=5)]
+    [ValidatePattern('^T\d{4}$')]
+    [string]$Technique,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=6)]
+    [ValidateSet(10,30,50,70,90)]
+    [int32]$Severity,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=7)]
+    [object]$Search,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=8)]
+    [object]$Operation,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=9)]
+    [ValidateSet('active','inactive',IgnoreCase=$false)]
+    [string]$Status,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=10)]
+    [Alias('trigger_on_create')]
+    [boolean]$TriggerOnCreate,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=11)]
+    [string]$Comment
+  )
+  begin {
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
+    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
+  }
+  process {
+    if ($PSBoundParameters.Cid) { $PSBoundParameters.Cid = Confirm-CidValue $PSBoundParameters.Cid }
+    @('search','operation').foreach{
+      if ($PSBoundParameters.$_) {
+        # Add 'search' and 'operation' to 'root' list in Format
+        [void]$Param.Format.Body.Remove($_)
+        $Param.Format.Body.root += $_
+      }
+    }
+    Invoke-Falcon @Param -UserInput $PSBoundParameters
+  }
+}
 function Remove-FalconCorrelationRule {
 <#
 .SYNOPSIS
@@ -87,6 +253,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconCorrelationRule
   param(
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:delete',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline,Position=1)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id
   )

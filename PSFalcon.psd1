@@ -101,7 +101,9 @@
     'Show-FalconRegistryCredential'
 
     # correlation-rules
+    'Edit-FalconCorrelationRule'
     'Get-FalconCorrelationRule'
+    'New-FalconCorrelationRule'
     'Remove-FalconCorrelationRule'
 
     # delivery-settings

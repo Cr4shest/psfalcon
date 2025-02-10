@@ -1121,6 +1121,56 @@
       "query": [
         "ids"
       ]
+    },
+    "patch": {
+      "body": {
+        "root": [
+          "description",
+          "id",
+          "name",
+          "severity",
+          "status",
+          "tactic",
+          "technique"
+        ],
+        "operation": [
+          "schedule",
+          "start_on",
+          "stop_on"
+        ],
+        "search": [
+          "filter",
+          "lookback",
+          "outcome",
+          "trigger_mode"
+        ]
+      }
+    },
+    "post": {
+      "body": {
+        "root": [
+          "comment",
+          "customer_id",
+          "description",
+          "name",
+          "severity",
+          "status",
+          "tactic",
+          "technique",
+          "trigger_on_create"
+        ],
+        "operation": [
+          "schedule",
+          "start_on",
+          "stop_on"
+        ],
+        "search": [
+          "filter",
+          "lookback",
+          "outcome",
+          "trigger_mode"
+        ]
+      }
     }
   },
   "/correlation-rules/queries/rules/v1": {
