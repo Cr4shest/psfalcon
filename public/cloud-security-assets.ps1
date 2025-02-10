@@ -12,6 +12,8 @@ Falcon Query Language expression to limit results
 Property and direction to sort results
 .PARAMETER Limit
 Maximum number of results per request [default: 500]
+.PARAMETER Offset
+Position to begin retrieving results
 .PARAMETER After
 Pagination token to retrieve the next set of results
 .PARAMETER Detailed
@@ -54,6 +56,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCloudAsset
     [Parameter(ParameterSetName='/cloud-security-assets/queries/resources/v1:get',Position=3)]
     [ValidateRange(1,1000)]
     [int32]$Limit,
+    [Parameter(ParameterSetName='/cloud-security-assets/queries/resources/v1:get')]
+    [string]$Offset,
     [Parameter(ParameterSetName='/cloud-security-assets/queries/resources/v1:get')]
     [string]$After,
     [Parameter(ParameterSetName='/cloud-security-assets/queries/resources/v1:get')]
