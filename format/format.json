@@ -387,6 +387,24 @@
       ]
     }
   },
+  "/cloud-security-assets/entities/resources/v1": {
+    "get": {
+      "query": [
+        "ids"
+      ]
+    }
+  },
+  "/cloud-security-assets/queries/resources/v1": {
+    "get": {
+      "query": [
+        "after",
+        "filter",
+        "sort",
+        "limit",
+        "offset"
+      ]
+    }
+  },
   "/configuration-assessment/combined/assessments/v1": {
     "get": {
       "query": [

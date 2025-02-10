@@ -55,6 +55,9 @@
     'Remove-FalconCloudGcpAccount'
     'Test-FalconCloudGcpServiceAccount'
 
+    # cloud-security-assets
+    'Get-FalconCloudAsset'
+
     # configuration-assessment
     'Get-FalconConfigAssessment'
     'Get-FalconConfigAssessmentLogic'
