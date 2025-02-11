@@ -74,11 +74,17 @@ class ApiClient {
       }
       if ($Request -and $Param.Outfile) {
         try {
-          # Download file to provided 'OutFile' path and display file information when successful
-          $LocalPath = $this.Path($Param.Outfile)
-          $this.Verbose('ApiClient.Invoke',"Creating '$LocalPath'.")
-          [System.IO.File]::WriteAllBytes($LocalPath,$Request.Result)
-          if (Test-Path $LocalPath) { Get-ChildItem $LocalPath | Select-Object FullName,Length,LastWriteTime }
+          if ($Request.Result) {
+            # Download file to provided 'OutFile' path and display file information when successful
+            $LocalPath = $this.Path($Param.Outfile)
+            $this.Verbose('ApiClient.Invoke',('Creating "{0}"' -f $LocalPath))
+            [System.IO.File]::WriteAllBytes($LocalPath,$Request.Result)
+            if (Test-Path $LocalPath) { Get-ChildItem $LocalPath | Select-Object FullName,Length,LastWriteTime }
+          } else {
+            # Return null when no ByteArray is available for download
+            $this.Verbose('ApiClient.Invoke','Empty ByteArray!')
+            $null
+          }
         } catch {
           throw $_
         } finally {
