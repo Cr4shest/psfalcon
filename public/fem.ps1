@@ -125,8 +125,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSubsidiary
           }
         }
       } else {
-        # Return entire result if 'meta.version_id' and 'resources' are not present
-        $_
+        # Return regular output if 'meta.version_id' and 'resources' are not present
+        Write-Result $_
       }
     }
   }
