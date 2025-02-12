@@ -92,6 +92,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSubsidiary
     [Parameter(ParameterSetName='/fem/combined/ecosystem-subsidiaries/v1:get',Mandatory)]
     [switch]$Detailed,
     [Parameter(ParameterSetName='/fem/queries/ecosystem-subsidiaries/v1:get')]
+    [Parameter(ParameterSetName='/fem/combined/ecosystem-subsidiaries/v1:get')]
     [switch]$All,
     [Parameter(ParameterSetName='/fem/queries/ecosystem-subsidiaries/v1:get')]
     [switch]$Total
@@ -106,17 +107,130 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSubsidiary
       $PSBoundParameters['Id'] = @($List)
       $Param['Max'] = 100
     }
-    $Request = Invoke-Falcon @Param -UserInput $PSBoundParameters -RawOutput
-    if ($Request.meta.version_id -and $Request.resources) {
-      if ($Param.Endpoint -match '/queries/') {
-        # Create object with 'id' value
-        $Request.resources = @($Request.resources).foreach{ [PSCustomObject]@{ id = $_ } }
-      }
-      @($Request.resources).foreach{
-        # Append 'version_id' and output each result
-        Set-Property $_ version_id $Request.meta.version_id
+    # Make request for unmodified result
+    Invoke-Falcon @Param -UserInput $PSBoundParameters -RawOutput | ForEach-Object {
+      if ($_.meta.version_id -and $_.resources) {
+        # Capture 'version_id' from 'meta'
+        $version_id = $_.meta.version_id
+        if ($Param.Endpoint -match '/queries/') {
+          @($_.resources).foreach{
+            # Convert 'id' string to object with 'id' and 'version_id' values
+            [PSCustomObject]@{ id = $_; version_id = $version_id }
+          }
+        } else {
+          @($_.resources).foreach{
+            # Append 'version_id' and return each detailed result
+            Set-Property $_ version_id $version_id
+            $_
+          }
+        }
+      } else {
+        # Return entire result if 'meta.version_id' and 'resources' are not present
         $_
       }
     }
+  }
+}
+function New-CommandName {
+<#
+.SYNOPSIS
+Download the entire contents of the blob. The relative link to this endpoint is returned in the GET /entities/external-assets/v1 request.
+.DESCRIPTION
+Requires 'Falcon Discover: Read'.
+.PARAMETER Assetid
+The Asset ID
+.PARAMETER Hash
+The File Hash
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-CommandName
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/blobs-download/v1:get',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/blobs-download/v1:get',Mandatory,Position=0)]
+    [string]$Assetid,
+    [Parameter(ParameterSetName='/fem/entities/blobs-download/v1:get',Mandatory,Position=0)]
+    [string]$Hash
+  )
+  begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+}
+function New-CommandName {
+<#
+.SYNOPSIS
+Download a preview of the blob. The relative link to this endpoint is returned in the GET /entities/external-assets/v1 request.
+.DESCRIPTION
+Requires 'Falcon Discover: Read'.
+.PARAMETER Assetid
+The Asset ID
+.PARAMETER Hash
+The File Hash
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-CommandName
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/blobs-preview/v1:get',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/blobs-preview/v1:get',Mandatory,Position=0)]
+    [string]$Assetid,
+    [Parameter(ParameterSetName='/fem/entities/blobs-preview/v1:get',Mandatory,Position=0)]
+    [string]$Hash
+  )
+  begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+}
+function New-CommandName {
+<#
+.SYNOPSIS
+Add external assets for external asset scanning.
+.DESCRIPTION
+Requires 'Falcon Discover: Write'.
+.PARAMETER Assets
+Assets to be added
+.PARAMETER SubsidiaryId
+Subsidiary ID to which assets are to be added
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-CommandName
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/external-asset-inventory/v1:post',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/external-asset-inventory/v1:post',Mandatory,Position=0)]
+    [inventoryapi.UserExternalAsset]$Assets,
+    [Parameter(ParameterSetName='/fem/entities/external-asset-inventory/v1:post',Position=0)]
+    [Alias('subsidiary_id')]
+    [string]$SubsidiaryId
+  )
+  begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+}
+function New-CommandName {
+<#
+.SYNOPSIS
+Delete multiple external assets.
+.DESCRIPTION
+Requires 'Falcon Discover: Write'.
+.PARAMETER Id
+XXX identifier
+
+One or more asset IDs (max: 100).
+.PARAMETER Description
+Some description that the user attached to the delete
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-CommandName
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/external-assets/v1:delete',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/external-assets/v1:delete',Mandatory,ValueFromPipelineByPropertyName,ValueFromPipeline)]
+    [Alias('ids')]
+    [string[]]$Id,
+    [Parameter(ParameterSetName='/fem/entities/external-assets/v1:delete',Mandatory,Position=0)]
+    [string]$Description
+  )
+  begin {
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
+    [System.Collections.Generic.List[string]]$List = @()
+  }
+  process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
+  end {
+    if ($List) { $PSBoundParameters['Id'] = @($List) }
+    Invoke-Falcon @Param -UserInput $PSBoundParameters
   }
 }
