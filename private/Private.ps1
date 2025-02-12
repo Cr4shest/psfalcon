@@ -680,8 +680,8 @@ function Invoke-Falcon {
       param([hashtable]$Splat,[object]$Object,[switch]$Raw)
       if ($Raw) {
         # Return entire result for 'RawOutput'
-        if ($Object.meta) {
-          # Output 'meta' to verbose stream and capture 'trace_id'
+        if ($Object.meta -and !$Object.errors) {
+          # Output 'meta' to verbose stream and capture 'trace_id' for a successful response
           $Message = (@($Object.meta.PSObject.Properties).foreach{
             if ($_.Name -eq 'pagination') {
               @($_.Value.PSObject.Properties).foreach{ ('pagination',$_.Name -join '.'),$_.Value -join '=' }
