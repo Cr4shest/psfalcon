@@ -616,7 +616,7 @@ function Invoke-Falcon {
     [string]$JsonBody
   )
   begin {
-    function Invoke-Loop ([hashtable]$Splat,[object]$Object,[int]$Int) {
+    function Invoke-Loop ([hashtable]$Splat,[object]$Object,[int]$Int,[switch]$Raw) {
       do {
         # Determine next offset value
         [string[]]$Next = if ($Object.after) {
@@ -631,21 +631,26 @@ function Invoke-Falcon {
           # Clone parameters and make request
           $Clone = Set-LoopParam $Splat $Next
           if ($Script:Falcon.Expiration -le (Get-Date).AddSeconds(240)) {
-            if ($PSCmdlet.ShouldProcess('Request-FalconToken','Get-ApiCredential')) {
-              # Refresh authorization token when required
-              Request-FalconToken
-            }
+            # Refresh authorization token when required
+            if ($PSCmdlet.ShouldProcess('Request-FalconToken','Get-ApiCredential')) { Request-FalconToken }
           }
           [string]$Target = New-ShouldMessage $Clone.Endpoint
           if ($PSCmdlet.ShouldProcess($Target,$Operation)) {
             $Script:Falcon.Api.Invoke($Clone.Endpoint) | ForEach-Object {
               # Output result, update pagination and received count
               $Object = $_.meta.pagination
-              Write-Request $Clone $_ -OutVariable Output
-              [int]$Int += ($Output | Measure-Object).Count
-              if ($null -ne $Object.total) {
-                Write-Log $Command ("Retrieved {0} of {1}" -f $Int,$Object.total)
+              if ($Raw) {
+                Write-Request $Clone $_ -Raw -OutVariable Output
+              } else {
+                Write-Request $Clone $_ -OutVariable Output
               }
+              [int]$Int += if ($Raw) {
+                # Use 'resources' to count for 'RawOutput'
+                ($Output.resources | Measure-Object).Count
+              } else {
+                ($Output | Measure-Object).Count
+              }
+              if ($null -ne $Object.total) { Write-Log $Command ("Retrieved {0} of {1}" -f $Int,$Object.total) }
             }
           }
         } elseif ($Int -lt $Object.total) {
@@ -672,19 +677,35 @@ function Invoke-Falcon {
     }
     function Write-Request {
       [CmdletBinding()]
-      param([hashtable]$Splat,[object]$Object)
-      [boolean]$NoDetail = if ($Splat.Endpoint.Path -match '(/combined/|/rule-groups-full/)') {
-        # Determine if endpoint requires a secondary 'Detailed' request
-        $true
+      param([hashtable]$Splat,[object]$Object,[switch]$Raw)
+      if ($Raw) {
+        # Return entire result for 'RawOutput'
+        if ($Object.meta) {
+          # Output 'meta' to verbose stream and capture 'trace_id'
+          $Message = (@($Object.meta.PSObject.Properties).foreach{
+            if ($_.Name -eq 'pagination') {
+              @($_.Value.PSObject.Properties).foreach{ ('pagination',$_.Name -join '.'),$_.Value -join '=' }
+            } else {
+              $_.Name,$_.Value -join '='
+            }
+          }) -join ', '
+          Write-Log 'Write-Request' ($Message -join ' ')
+        }
+        $Object
       } else {
-        $false
-      }
-      if ($Splat.Detailed -eq $true -and $NoDetail -eq $false) {
-        # Get 'Detailed' result
-        $Output = Write-Result $Object
-        if ($Output.aid) { & $Command -Id $Output.aid } elseif ($Output) { & $Command -Id $Output }
-      } else {
-        Write-Result $Object
+        [boolean]$NoDetail = if ($Splat.Endpoint.Path -match '(/combined/|/rule-groups-full/)') {
+          # Determine if endpoint requires a secondary 'Detailed' request
+          $true
+        } else {
+          $false
+        }
+        if ($Splat.Detailed -eq $true -and $NoDetail -eq $false) {
+          # Get 'Detailed' result
+          $Output = Write-Result $Object
+          if ($Output.aid) { & $Command -Id $Output.aid } elseif ($Output) { & $Command -Id $Output }
+        } else {
+          Write-Result $Object
+        }
       }
     }
     if (!$Script:Falcon.Api.Client.DefaultRequestHeaders.Authorization -or !$Script:Falcon.Hostname) {
@@ -735,34 +756,34 @@ function Invoke-Falcon {
         try {
           Write-Log $Command $Endpoint
           $Request = $Script:Falcon.Api.Invoke($_.Endpoint)
-          if ($Request -and $RawOutput) {
-            # Return result if 'RawOutput' is defined
-            if ($Request.meta) {
-              # Output 'meta' to verbose stream
-              $Message = (@($Request.meta.PSObject.Properties).foreach{
-                if ($_.Name -eq 'pagination') {
-                  @($_.Value.PSObject.Properties).foreach{ ('pagination',$_.Name -join '.'),$_.Value -join '=' }
-                } else {
-                  $_.Name,$_.Value -join '='
-                }
-              }) -join ', '
-              Write-Log 'Invoke-Falcon' ($Message -join ' ')
-            }
-            $Request
-          } elseif ($Request) {
+          if ($Request) {
             # Capture pagination for 'Total' and 'All'
             $Pagination = $Request.meta.pagination
             if ($null -ne $Pagination.total -and $_.Total -eq $true) {
               # Output 'Total'
               $Pagination.total
             } else {
-              Write-Request $_ $Request -OutVariable Result
+              if ($RawOutput) {
+                # Return entire result for 'RawOutput'
+                Write-Request $_ $Request -Raw -OutVariable Result
+              } else {
+                Write-Request $_ $Request -OutVariable Result
+              }
               if ($Result -and $_.All -eq $true) {
                 # Repeat request(s)
-                [int]$Count = ($Result | Measure-Object).Count
+                [int]$Count = if ($RawOutput) {
+                  # Count 'resources' for 'RawOutput'
+                  ($Result.resources | Measure-Object).Count
+                } else {
+                  ($Result | Measure-Object).Count
+                }
                 if ($Pagination.total -and $Count -lt $Pagination.total) {
                   Write-Log $Command "Retrieved $Count of $($Pagination.total)"
-                  Invoke-Loop $_ $Pagination $Count
+                  if ($RawOutput) {
+                    Invoke-Loop $_ $Pagination $Count -Raw
+                  } else {
+                    Invoke-Loop $_ $Pagination $Count
+                  }
                 }
               }
             }
