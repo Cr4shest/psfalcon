@@ -737,6 +737,17 @@ function Invoke-Falcon {
           $Request = $Script:Falcon.Api.Invoke($_.Endpoint)
           if ($Request -and $RawOutput) {
             # Return result if 'RawOutput' is defined
+            if ($Request.meta) {
+              # Output 'meta' to verbose stream
+              $Message = (@($Request.meta.PSObject.Properties).foreach{
+                if ($_.Name -eq 'pagination') {
+                  @($_.Value.PSObject.Properties).foreach{ ('pagination',$_.Name -join '.'),$_.Value -join '=' }
+                } else {
+                  $_.Name,$_.Value -join '='
+                }
+              }) -join ', '
+              Write-Log 'Invoke-Falcon' ($Message -join ' ')
+            }
             $Request
           } elseif ($Request) {
             # Capture pagination for 'Total' and 'All'
