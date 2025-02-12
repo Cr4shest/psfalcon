@@ -43,6 +43,8 @@ function Get-FalconSubsidiary {
 Search for subsidiaries in Falcon Discover 
 .DESCRIPTION
 Requires 'Falcon Discover: Read'.
+.PARAMETER Id
+Subsidiary identifier
 .PARAMETER VersionId
 Version identifier
 .PARAMETER Filter
