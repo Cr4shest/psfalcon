@@ -1792,6 +1792,25 @@
       ]
     }
   },
+  "/fem/combined/ecosystem-subsidiaries/v1": {
+    "get": {
+      "query": [
+        "offset",
+        "limit",
+        "filter",
+        "sort",
+        "version_id"
+      ]
+    }
+  },
+  "/fem/entities/ecosystem-subsidiaries/v1": {
+    "get": {
+      "query": [
+        "ids",
+        "version_id"
+      ]
+    }
+  },
   "/fem/entities/external-assets/v1": {
     "get": {
       "query": [
@@ -1808,6 +1827,17 @@
           "triage"
         ]
       }
+    }
+  },
+  "/fem/queries/ecosystem-subsidiaries/v1": {
+    "get": {
+      "query": [
+        "offset",
+        "limit",
+        "filter",
+        "sort",
+        "version_id"
+      ]
     }
   },
   "/fem/queries/external-assets/v1": {
