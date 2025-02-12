@@ -40,7 +40,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconAsset
 function Get-FalconSubsidiary {
 <#
 .SYNOPSIS
-Search for Falcon Exposure Management subsidiaries
+Search for subsidiaries in Falcon Discover 
 .DESCRIPTION
 Requires 'Falcon Discover: Read'.
 .PARAMETER VersionId
