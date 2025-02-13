@@ -219,11 +219,20 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
   process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
   end {
     if ($List) { $PSBoundParameters['Id'] = @($List) }
-    if ($PSBoundParameters.Include -and $PSCmdlet.ParameterSetName -match
-    '/devices/combined/devices(-hidden)?/v1:get' -and $PSBoundParameters.Field -and
-    $PSBoundParameters.Field -notcontains 'device_id') {
-      # Error if 'fields' don't contain 'device_id' when using 'Include'
-      throw '"Field" must contain "device_id" when using "Include"!'
+    if ($Include -and $PSCmdlet.ParameterSetName -match '/devices/combined/devices(-hidden)?/v1:get' -and
+    $PSBoundParameters.Field) {
+      @(@('group_names','groups'),@('policy_names','device_policies')).foreach{
+        # Error if 'fields' does not contain required property for relevant 'Include' value
+        if ($Include -contains $_[0] -and $PSBoundParameters.Field -notcontains $_[1]) {
+          throw ('"Field" must contain "{1}" when "{0}" is provided with "Include"!' -f $_[0],$_[1])
+        }
+      }
+      @(@($Include).Where({$_ -notmatch '^(group|policy)_names$'}) | Select-Object -First 1).foreach{
+        if ($PSBoundParameters.Field -notcontains 'device_id') {
+          # Error if 'fields' does not contain 'device_id' for other 'Include' values
+          throw ('"Field" must contain "device_id" when "{0}" is provided with "Include"!' -f $_)
+        }
+      }
     }
     if ($PSBoundParameters.Limit -and $PSBoundParameters.Limit -gt 5000) {
       if ($PSCmdlet.ParameterSetName -notmatch '/devices/combined/devices(-hidden)?/v1:get') {
