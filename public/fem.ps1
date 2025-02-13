@@ -133,3 +133,63 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSubsidiary
     }
   }
 }
+function New-FalconAsset {
+<#
+.SYNOPSIS
+Add external assets to Falcon Discover
+.DESCRIPTION
+Requires 'Falcon Discover: Write'.
+.PARAMETER Asset
+An object containing asset properties
+.PARAMETER SubsidiaryId
+Subsidiary identifier
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/New-FalconAsset
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/external-asset-inventory/v1:post',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/external-asset-inventory/v1:post',Mandatory,Position=1)]
+    [Alias('assets')]
+    [object]$Asset,
+    [Parameter(ParameterSetName='/fem/entities/external-asset-inventory/v1:post',Position=2)]
+    [Alias('subsidiary_id')]
+    [string]$SubsidiaryId
+  )
+  begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+}
+function Remove-FalconAsset {
+<#
+.SYNOPSIS
+Remove external assets from Falcon Discover
+.DESCRIPTION
+Requires 'Falcon Discover: Write'.
+.PARAMETER Id
+Asset identifier
+.PARAMETER Comment
+Audit log comment
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconAsset
+#>
+  [CmdletBinding(DefaultParameterSetName='/fem/entities/external-assets/v1:delete',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/fem/entities/external-assets/v1:delete',Mandatory,Position=1)]
+    [Alias('description')]
+    [string]$Comment,
+    [Parameter(ParameterSetName='/fem/entities/external-assets/v1:delete',Mandatory,
+      ValueFromPipelineByPropertyName,ValueFromPipeline,Position=2)]
+    [Alias('ids')]
+    [string[]]$Id
+  )
+  begin {
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
+    [System.Collections.Generic.List[string]]$List = @()
+  }
+  process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
+  end {
+    if ($List) {
+      $PSBoundParameters['Id'] = @($List)
+      Invoke-Falcon @Param -UserInput $PSBoundParameters
+    }
+  }
+}

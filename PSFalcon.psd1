@@ -166,6 +166,8 @@
     # fem
     'Edit-FalconAsset'
     'Get-FalconSubsidiary'
+    'New-FalconAsset'
+    'Remove-FalconAsset'
 
     # fdr
     'Get-FalconReplicatorEvent'

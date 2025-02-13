@@ -1812,6 +1812,16 @@
     }
   },
   "/fem/entities/external-assets/v1": {
+    "delete": {
+      "body": {
+        "root": [
+          "description"
+        ]
+      },
+      "query": [
+        "ids"
+      ]
+    },
     "get": {
       "query": [
         "ids"
@@ -1825,6 +1835,16 @@
           "criticality_description",
           "id",
           "triage"
+        ]
+      }
+    }
+  },
+  "/fem/entities/external-asset-inventory/v1": {
+    "post": {
+      "body": {
+        "data": [
+          "assets",
+          "subsidiary_id"
         ]
       }
     }
