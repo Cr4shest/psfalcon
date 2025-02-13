@@ -1267,6 +1267,28 @@
       ]
     }
   },
+  "/devices/combined/devices/v1": {
+    "get": {
+      "query": [
+        "offset",
+        "limit",
+        "sort",
+        "filter",
+        "fields"
+      ]
+    }
+  },
+  "/devices/combined/devices-hidden/v1": {
+    "get": {
+      "query": [
+        "offset",
+        "limit",
+        "sort",
+        "filter",
+        "fields"
+      ]
+    }
+  },
   "/devices/combined/devices/login-history/v2": {
     "post": {
       "body": {

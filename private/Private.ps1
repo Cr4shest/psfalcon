@@ -621,6 +621,8 @@ function Invoke-Falcon {
         # Determine next offset value
         [string[]]$Next = if ($Object.after) {
           @('after',$Object.after)
+        } elseif ($Object.next) {
+          @('offset',$Object.next)
         } elseif ($Object.next_token) {
           @('next_token',$Object.next_token)
         } elseif ($null -ne $Object.offset) {

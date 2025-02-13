@@ -93,11 +93,13 @@ Falcon Query Language expression to limit results
 .PARAMETER Sort
 Property and direction to sort results
 .PARAMETER Limit
-Maximum number of results per request
+Maximum number of results per request [default: 100]
 .PARAMETER Include
 Include additional properties
 .PARAMETER Offset
 Position to begin retrieving results
+.PARAMETER Field
+Host properties to include in response
 .PARAMETER Hidden
 Restrict search to 'hidden' hosts
 .PARAMETER Login
@@ -130,10 +132,14 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
     [string[]]$Id,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=1)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=1)]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Position=1)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Position=1)]
     [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=2)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=2)]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Position=2)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Position=2)]
     [ValidateSet('device_id.asc','device_id.desc','agent_load_flags.asc','agent_load_flags.desc',
       'agent_version.asc','agent_version.desc','bios_manufacturer.asc','bios_manufacturer.desc',
       'bios_version.asc','bios_version.desc','config_id_base.asc','config_id_base.desc',
@@ -153,17 +159,28 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
     [string]$Sort,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=3)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=3)]
-    [ValidateRange(1,5000)]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Position=3)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Position=3)]
+    [ValidateRange(1,10000)]
     [int32]$Limit,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get',Position=4)]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Position=4)]
     [ValidateSet('content_state','group_names','login_history','network_history','online_state','policy_names',
       'zero_trust_assessment',IgnoreCase=$false)]
     [string[]]$Include,
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Position=5)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Position=5)]
+    [Alias('fields')]
+    [string[]]$Field,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get')]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get')]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get')]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get')]
     [string]$Offset,
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Mandatory)]
     [switch]$Hidden,
     [Parameter(ParameterSetName='/devices/combined/devices/login-history/v2:post',Mandatory)]
     [switch]$Login,
@@ -171,11 +188,13 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
     [switch]$Network,
     [Parameter(ParameterSetName='/devices/entities/online-state/v1:get',Mandatory)]
     [switch]$State,
-    [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get')]
-    [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get')]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get',Mandatory)]
     [switch]$Detailed,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get')]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get')]
+    [Parameter(ParameterSetName='/devices/combined/devices/v1:get')]
+    [Parameter(ParameterSetName='/devices/combined/devices-hidden/v1:get')]
     [switch]$All,
     [Parameter(ParameterSetName='/devices/queries/devices-scroll/v1:get')]
     [Parameter(ParameterSetName='/devices/queries/devices-hidden/v1:get')]
@@ -200,95 +219,106 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
   process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
   end {
     if ($List) { $PSBoundParameters['Id'] = @($List) }
-    if ($Include) {
-      $Request = Invoke-Falcon @Param -UserInput $PSBoundParameters
-      if ($Request) {
-        if (!$Request.device_id) {
-          $Request = if ($Include) {
-            [string[]]$Select = 'device_id'
-            $Select += switch ($Include) {
-              { $_ -contains 'group_names' } { 'groups' }
-              { $_ -contains 'policy_names' } { 'device_policies' }
-            }
-            & $MyInvocation.MyCommand.Name -Id $Request | Select-Object $Select
-          } else {
-            @($Request).foreach{ ,[PSCustomObject]@{ device_id = $_ }}
-          }
-        }
-        if ($Include -contains 'content_state') {
-          foreach ($i in (Get-FalconContentState -Id $Request.device_id -EA 0)) {
-            $SetParam = @{
-              Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
-              Name = 'content_state'
-              Value = $i | Select-Object system_critical,rapid_response_content,vulnerability_management,
-                sensor_operations
-            }
-            Set-Property @SetParam
-          }
-        }
-        if ($Include -contains 'group_names') {
-          $Groups = try { $Request.groups | Get-FalconHostGroup -EA 0 | Select-Object id,name } catch {}
-          if ($Groups) {
-            foreach ($i in $Request) {
-              if ($i.groups) { $i.groups = $Groups | Where-Object { $i.groups -contains $_.id }}
-            }
-          }
-        }
-        if ($Include -contains 'login_history') {
-          foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -Login -EA 0)) {
-            $SetParam = @{
-              Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
-              Name = 'login_history'
-              Value = $i.recent_logins
-            }
-            Set-Property @SetParam
-          }
-        }
-        if ($Include -contains 'network_history') {
-          foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -Network -EA 0)) {
-            $SetParam = @{
-              Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
-              Name = 'network_history'
-              Value = $i.history
-            }
-            Set-Property @SetParam
-          }
-        }
-        if ($Include -contains 'online_state') {
-          foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -State -EA 0)) {
-            $SetParam = @{
-              Object = $Request | Where-Object { $_.device_id -eq $i.id }
-              Name = 'online_state'
-              Value = $i
-            }
-            Set-Property @SetParam
-          }
-        }
-        if ($Include -contains 'policy_names') {
-          @('device_control','firewall','prevention','remote_response','sensor_update').foreach{
-            foreach ($i in (& "Get-Falcon$($_ -replace '(remote)?_',$null)Policy" -Id (
-            $Request.device_policies.$_.policy_id | Select-Object -Unique) -EA 0)) {
-              @($Request.device_policies.$_).Where({$_.policy_id -eq $i.id}).foreach{
-                Set-Property $_ 'policy_name' $i.name
-              }
-            }
-          }
-        }
-        if ($Include -contains 'zero_trust_assessment') {
-          foreach ($i in (Get-FalconZta -Id $Request.device_id -EA 0)) {
-            $SetParam = @{
-              Object = $Request | Where-Object { $_.device_id -eq $i.aid }
-              Name = 'zero_trust_assessment'
-              Value = $i | Select-Object modified_time,sensor_file_status,assessment,assessment_items
-            }
-            Set-Property @SetParam
-          }
-        }
-        $Request
-      }
-    } else {
-      Invoke-Falcon @Param -UserInput $PSBoundParameters
+    if ($PSBoundParameters.Include -and $PSCmdlet.ParameterSetName -match
+    '/devices/combined/devices(-hidden)?/v1:get' -and $PSBoundParameters.Field -and
+    $PSBoundParameters.Field -notcontains 'device_id') {
+      # Error if 'fields' don't contain 'device_id' when using 'Include'
+      throw '"Field" must contain "device_id" when using "Include"!'
     }
+    if ($PSBoundParameters.Limit -and $PSBoundParameters.Limit -gt 5000) {
+      if ($PSCmdlet.ParameterSetName -notmatch '/devices/combined/devices(-hidden)?/v1:get') {
+        # Set 'limit' to max of 5,000 if not using /devices/combined/ endpoint
+        $PSBoundParameters.Limit = 5000
+      }
+    }
+    # Convert 'fields' into single, comma delimited string
+    if ($PSBoundParameters.Field) { $PSBoundParameters.Field = $PSBoundParameters.Field -join ',' }
+    $Request = Invoke-Falcon @Param -UserInput $PSBoundParameters
+    if ($Request -and $Include) {
+      if (!$Request.device_id) {
+        # Convert list of 'device_id' values into objects with 'device_id' and other required properties
+        $Request = if ($Include) {
+          [string[]]$Select = 'device_id'
+          $Select += switch ($Include) {
+            { $_ -contains 'group_names' } { 'groups' }
+            { $_ -contains 'policy_names' } { 'device_policies' }
+          }
+          & $MyInvocation.MyCommand.Name -Id $Request | Select-Object $Select
+        } else {
+          @($Request).foreach{ ,[PSCustomObject]@{ device_id = $_ }}
+        }
+      }
+      if ($Include -contains 'content_state') {
+        foreach ($i in (Get-FalconContentState -Id $Request.device_id -EA 0)) {
+          $SetParam = @{
+            Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
+            Name = 'content_state'
+            Value = $i | Select-Object system_critical,rapid_response_content,vulnerability_management,
+              sensor_operations
+          }
+          Set-Property @SetParam
+        }
+      }
+      if ($Include -contains 'group_names') {
+        $Groups = try { $Request.groups | Get-FalconHostGroup -EA 0 | Select-Object id,name } catch {}
+        if ($Groups) {
+          foreach ($i in $Request) {
+            if ($i.groups) { $i.groups = $Groups | Where-Object { $i.groups -contains $_.id }}
+          }
+        }
+      }
+      if ($Include -contains 'login_history') {
+        foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -Login -EA 0)) {
+          $SetParam = @{
+            Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
+            Name = 'login_history'
+            Value = $i.recent_logins
+          }
+          Set-Property @SetParam
+        }
+      }
+      if ($Include -contains 'network_history') {
+        foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -Network -EA 0)) {
+          $SetParam = @{
+            Object = $Request | Where-Object { $_.device_id -eq $i.device_id }
+            Name = 'network_history'
+            Value = $i.history
+          }
+          Set-Property @SetParam
+        }
+      }
+      if ($Include -contains 'online_state') {
+        foreach ($i in (& $MyInvocation.MyCommand.Name -Id $Request.device_id -State -EA 0)) {
+          $SetParam = @{
+            Object = $Request | Where-Object { $_.device_id -eq $i.id }
+            Name = 'online_state'
+            Value = $i
+          }
+          Set-Property @SetParam
+        }
+      }
+      if ($Include -contains 'policy_names') {
+        @('device_control','firewall','prevention','remote_response','sensor_update').foreach{
+          foreach ($i in (& "Get-Falcon$($_ -replace '(remote)?_',$null)Policy" -Id (
+          $Request.device_policies.$_.policy_id | Select-Object -Unique) -EA 0)) {
+            @($Request.device_policies.$_).Where({$_.policy_id -eq $i.id}).foreach{
+              Set-Property $_ 'policy_name' $i.name
+            }
+          }
+        }
+      }
+      if ($Include -contains 'zero_trust_assessment') {
+        foreach ($i in (Get-FalconZta -Id $Request.device_id -EA 0)) {
+          $SetParam = @{
+            Object = $Request | Where-Object { $_.device_id -eq $i.aid }
+            Name = 'zero_trust_assessment'
+            Value = $i | Select-Object modified_time,sensor_file_status,assessment,assessment_items
+          }
+          Set-Property @SetParam
+        }
+      }
+    }
+    $Request
   }
 }
 function Get-FalconHostGroup {
