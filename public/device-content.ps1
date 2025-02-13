@@ -48,7 +48,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentState
     [switch]$Total
   )
   begin {
-    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName; Max = 100 }
     [System.Collections.Generic.List[string]]$List = @()
   }
   process {
