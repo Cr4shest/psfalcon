@@ -128,10 +128,10 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
     function New-RulePort ([string]$String) {
       if ($String -notmatch $Regex.Any) {
         # Create 'port' objects
-        @($String -split $Regex.Join).foreach{
+        @($String -split $Regex.Join).Trim().foreach{
           if ($_ -match '-') {
             # Split ranges into 'start' and 'end'
-            [int[]]$Range = $_ -split '-',2
+            [int[]]$Range = ($_ -split '-',2).Trim()
             @{ start = $Range[0]; end = $Range[1] }
           } else {
             # Create separate objects for each value when multiple are provided
@@ -202,6 +202,8 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
             remote_address = @(New-RuleAddress $Obj.($UserMap.remote_address) $Obj.($UserMap.name))
             remote_port = @(New-RulePort $Obj.($UserMap.remote_port))
           }
+          # Trim name to 64 characters
+          if ($Output.name.Length -gt 64) { $Output.name = ($Output.name).SubString(0,63) }
           $Output.fields.Add((New-RuleField $Obj))
           foreach ($Name in ('image_name','service_name')) {
             # Add 'image_name' and 'service_name' to 'fields', when present
@@ -234,7 +236,7 @@ https://github.com/crowdstrike/psfalcon/wiki/ConvertTo-FalconFirewallRule
     $Regex = @{
       # Regex patterns to use when checking rule content
       Any = '^(any|\*)$'
-      Join = '[;,-]'
+      Join = '[;,]'
     }
     [System.Collections.Generic.List[object]]$List = @()
   }
