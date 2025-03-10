@@ -102,38 +102,38 @@ Display total result count instead of results
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
 #>
-  [CmdletBinding(DefaultParameterSetName='/correlation-rules/queries/rules/v1:get',SupportsShouldProcess)]
+  [CmdletBinding(DefaultParameterSetName='/correlation-rules/queries/rules/v2:get',SupportsShouldProcess)]
   param(
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:get',Mandatory,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v2:get',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=1)]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=1)]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Position=1)]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get',Position=1)]
     [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=2)]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=2)]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Position=2)]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get',Position=2)]
     [Alias('q')]
     [string]$Query,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=3)]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=3)]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Position=3)]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get',Position=3)]
     [ValidateSet('created_on|asc','created_on|desc','last_updated_on|asc','last_updated_on|desc',
       IgnoreCase=$false)]
     [string]$Sort,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Position=4)]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Position=4)]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get',Position=4)]
     [int32]$Limit,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get')]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get')]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get')]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get')]
     [int32]$Offset,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Mandatory)]
     [switch]$Detailed,
-    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v1:get')]
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get')]
+    [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get')]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get')]
     [switch]$All,
-    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v1:get')]
+    [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get')]
     [switch]$Total
   )
   begin {
