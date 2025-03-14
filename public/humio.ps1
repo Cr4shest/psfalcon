@@ -31,7 +31,6 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconLookupFile
     }
   }
   process {
-    $PSBoundParameters.Path = Assert-Extension $PSBoundParameters.Path 'csv'
     $Param.Endpoint = $Param.Endpoint -replace '\{repository\}',$PSBoundParameters.Repository
     [void]$PSBoundParameters.Remove('Repository')
     Invoke-Falcon @Param -UserInput $PSBoundParameters
