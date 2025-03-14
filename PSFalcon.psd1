@@ -233,6 +233,9 @@
     'Rename-FalconMigration'
     'Remove-FalconMigration'
 
+    # humio
+    'New-FalconLookupFile'
+
     # identity-protection
     'Invoke-FalconIdentityGraph'
     'Get-FalconIdentityHost'
