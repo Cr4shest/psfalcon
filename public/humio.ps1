@@ -20,6 +20,8 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconLookupFile
     [Alias('file')]
     [string]$Path,
     [Parameter(ParameterSetName='/humio/api/v1/repositories/{repository}/files:post',Mandatory,Position=2)]
+    [ValidateSet('3pi_parsers','all','falcon','falcon_for_it_view','forensics','forensics_view','investigate_view',
+      'search-all','third_party',IgnoreCase=$false)]
     [string]$Repository
   )
   begin {
