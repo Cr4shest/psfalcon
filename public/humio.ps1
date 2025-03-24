@@ -20,8 +20,8 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconLookupFile
     [Alias('file')]
     [string]$Path,
     [Parameter(ParameterSetName='/humio/api/v1/repositories/{repository}/files:post',Mandatory,Position=2)]
-    [ValidateSet('3pi_parsers','all','falcon','falcon_for_it_view','forensics','forensics_view','investigate_view',
-      'search-all','third_party',IgnoreCase=$false)]
+    [ValidateSet('3pi_parsers','event_search_all','falcon_for_it_view','forensics_view','investigate_view',
+      'search-all',IgnoreCase=$false)]
     [string]$Repository
   )
   begin {
@@ -29,12 +29,12 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconLookupFile
       Command = $MyInvocation.MyCommand.Name
       Endpoint = $PSCmdlet.ParameterSetName
       Format = @{ formdata = @('file') }
-      Headers = @{ ContentType = 'multipart/form-data' }
+      Headers = @{ Accept = 'text/plain'; ContentType = 'multipart/form-data' }
     }
   }
   process {
     $Param.Endpoint = $Param.Endpoint -replace '\{repository\}',$PSBoundParameters.Repository
     [void]$PSBoundParameters.Remove('Repository')
-    Invoke-Falcon @Param -UserInput $PSBoundParameters
+    Invoke-Falcon @Param -UserInput $PSBoundParameters -RawOutput
   }
 }
