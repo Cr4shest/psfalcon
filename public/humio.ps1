@@ -17,7 +17,7 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconLookupFile
     [Parameter(ParameterSetName='/humio/api/v1/repositories/{repository}/files:post',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline,Position=1)]
     [ValidatePattern('\.csv$')]
-    [Alias('file')]
+    [Alias('file','FullName')]
     [string]$Path,
     [Parameter(ParameterSetName='/humio/api/v1/repositories/{repository}/files:post',Mandatory,Position=2)]
     [ValidateSet('3pi_parsers','event_search_all','falcon_for_it_view','forensics_view','investigate_view',
