@@ -42,13 +42,18 @@ class ApiClient {
             $Filename = [System.IO.Path]::GetFileName($this.Path($_.Value))
             $StreamContent = [System.Net.Http.StreamContent]::New($FileStream)
             $FileType = $this.StreamType($Filename)
-            if ($FileType) { $StreamContent.Headers.ContentType = $FileType }
+            if ($FileType) {
+              # Add StreamContent with ContentType to verbose output
+              $StreamContent.Headers.ContentType = $FileType
+              "$($_.Key)=<StreamContent>","ContentType=$FileType" -join ', '
+            } else {
+              "$($_.Key)=<StreamContent>"
+            }
             $Message.Content.Add($StreamContent,$_.Key,$Filename)
-            @($_.Key,'<StreamContent>') -join '='
           } else {
             # Add StringContent for other Formdata key/value pairs
             $Message.Content.Add([System.Net.Http.StringContent]::New($_.Value),$_.Key)
-            @($_.Key,$_.Value) -join '='
+            "$($_.Key)=$($_.Value)"
           }
           $this.Verbose('ApiClient.Invoke',($Verbose -join ', '))
         }
