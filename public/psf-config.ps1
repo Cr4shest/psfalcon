@@ -1754,19 +1754,19 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         # Create FileVantageRuleGroup, FirewallGroup (including FirewallRule), and IoaGroup
         New-Group $p.Key $UaComment
       } elseif ($p.Key -eq 'Ioc') {
-          # Create Ioc
+        # Create Ioc
         do {
-          foreach ($i in ($p.Value.Import | New-FalconIoc -EA 0 EV Fail)) {
+          foreach ($i in ($p.Value.Import | New-FalconIoc -EA 0 -EV Fail)) {
             if ($i.message_type -and $i.message) {
               # Add individual failure to output
               Add-Result Failed $i $p.Key -Log 'to create' -Comment ($i.message_type,$i.message -join ': ')
-            } elseif ($i.value) {
+            } elseif ($i.type -and $i.value) {
               # Update identifier reference, capture result
               Add-Result Created $i $p.Key
               Set-IdRef $i $p.Key -Update
             }
             # Remove individual Ioc from Import
-            $p.Value.Import = @($p.Value.Import).Where({$_.value -ne $i.value})
+            $p.Value.Import = @($p.Value.Import).Where({$_.type -ne $i.type -and $_.value -ne $i.value})
           }
           if ($Fail) {
             @($p.Value.Import).foreach{
