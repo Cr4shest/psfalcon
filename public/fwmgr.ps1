@@ -768,7 +768,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallRule
     }
     [System.Collections.Generic.List[string]]$List = @()
   }
-  process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
+  process {
+    if ($Id) {
+      @($Id).foreach{ $List.Add($_) }
+    } elseif ($PolicyId) {
+      # Make request to /fwmgr/queries/policy-rules/v1:get
+      $PSBoundParameters['Id'] = $PSBoundParameters.PolicyId
+      [void]$PSBoundParameters.Remove('PolicyId')
+    }
+  }
   end {
     if ($List) {
       $Param['Format'] = @{ Query = @('ids') }
