@@ -487,14 +487,14 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconHostAction
   [CmdletBinding(DefaultParameterSetName='/devices/entities/devices-actions/v2:post',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/devices/entities/devices-actions/v2:post',Mandatory,Position=1)]
-    [ValidateSet('contain','lift_containment','lift_filesystem_containment_all','hide_host','unhide_host','detection_suppress',
-      'detection_unsuppress',IgnoreCase=$false)]
+    [ValidateSet('contain','detection_suppress','detection_unsuppress','hide_host','lift_containment',
+      'lift_filesystem_containment_all','unhide_host',IgnoreCase=$false)]
     [Alias('action_name')]
     [string]$Name,
     [Parameter(ParameterSetName='/devices/entities/devices-actions/v2:post',Position=2)]
-    [ValidateSet('agent_version','cid','external_ip','filesystem_containment_status','first_seen','host_hidden_status','hostname',
-      'last_seen','local_ip','mac_address','os_build','os_version','platform_name','product_type',
-      'product_type_desc','reduced_functionality_mode','serial_number','system_manufacturer',
+    [ValidateSet('agent_version','cid','external_ip','filesystem_containment_status','first_seen',
+      'host_hidden_status','hostname','last_seen','local_ip','mac_address','os_build','os_version','platform_name',
+      'product_type','product_type_desc','reduced_functionality_mode','serial_number','system_manufacturer',
       'system_product_name','tags',IgnoreCase=$false)]
     [string[]]$Include,
     [Parameter(ParameterSetName='/devices/entities/devices-actions/v2:post',Mandatory,
