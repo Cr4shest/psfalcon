@@ -144,7 +144,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconHost
       'agent_version.asc','agent_version.desc','bios_manufacturer.asc','bios_manufacturer.desc',
       'bios_version.asc','bios_version.desc','config_id_base.asc','config_id_base.desc',
       'config_id_build.asc','config_id_build.desc','config_id_platform.asc','config_id_platform.desc',
-      'cpu_signature.asc','cpu_signature.desc','external_ip.asc','external_ip.desc','first_seen.asc',
+      'cpu_signature.asc','cpu_signature.desc','external_ip.asc','external_ip.desc',
+      'filesystem_containment_status.asc','filesystem_containment_status.desc','first_seen.asc',
       'first_seen.desc','hostname.asc','hostname.desc','instance_id.asc','instance_id.desc',
       'last_login_timestamp.asc','last_login_timestamp.desc','last_seen.asc','last_seen.desc',
       'local_ip.asc','local_ip.desc','local_ip.raw.asc','local_ip.raw.desc','mac_address.asc',
@@ -486,12 +487,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconHostAction
   [CmdletBinding(DefaultParameterSetName='/devices/entities/devices-actions/v2:post',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/devices/entities/devices-actions/v2:post',Mandatory,Position=1)]
-    [ValidateSet('contain','lift_containment','hide_host','unhide_host','detection_suppress',
+    [ValidateSet('contain','lift_containment','lift_filesystem_containment_all','hide_host','unhide_host','detection_suppress',
       'detection_unsuppress',IgnoreCase=$false)]
     [Alias('action_name')]
     [string]$Name,
     [Parameter(ParameterSetName='/devices/entities/devices-actions/v2:post',Position=2)]
-    [ValidateSet('agent_version','cid','external_ip','first_seen','host_hidden_status','hostname',
+    [ValidateSet('agent_version','cid','external_ip','filesystem_containment_status','first_seen','host_hidden_status','hostname',
       'last_seen','local_ip','mac_address','os_build','os_version','platform_name','product_type',
       'product_type_desc','reduced_functionality_mode','serial_number','system_manufacturer',
       'system_product_name','tags',IgnoreCase=$false)]
