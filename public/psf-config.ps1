@@ -320,6 +320,50 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                   $i.Name
                 }
               }
+            } elseif ($i.Name -eq 'classes') {
+              foreach ($c in $i.Value) {
+                $CompC = $Old.settings.($i.Name).Where({$_.id -eq $c.id})
+                if ($CompC) {
+                   $c.exceptions = foreach ($e in $c.exceptions) {
+                    # Check 'exceptions' under 'classes' for new exceptions
+                    [System.Collections.Generic.List[string]]$SelectE = @('match_method','action')
+                    switch ($e.match_method) {
+                      'COMBINED_ID' { $SelectE.Add('combined_id') }
+                      'VID' { $SelectE.Add('vendor_id_decimal') }
+                      'VID_PID' { @('vendor_id_decimal','product_id_decimal').foreach{ $SelectE.Add($_) }}
+                      'VID_PID_SERIAL' {
+                        @('vendor_id_decimal','product_id_decimal','serial_number').foreach{ $SelectE.Add($_) }
+                      }
+                    }
+                    $Filter = [scriptblock]::Create(((@($SelectE).foreach{
+                      '$_.{0} -eq "{1}"' -f $_,$e.$_
+                    }) -join ' -and '))
+                    if (!($CompC.exceptions | Where-Object -FilterScript $Filter)) {
+                      if ($Result) {
+                        # Capture result
+                        [string[]]$Id = @($SelectE).Where({$_ -notmatch 'action|match_method'}).foreach{ $e.$_ }
+                        Add-Result Modified $New $Item 'classes.exceptions' $null $e.id -Comment ($e.match_method,
+                          ($Id -join '_') -join ':')
+                      } else {
+                        # Capture exclusions not present in target policy
+                        if ($e.id) { $e.PSObject.Properties.Remove('id') }
+                        $e
+                      }
+                    }
+                  }
+                  if ($c.exceptions -and !$Result) {
+                    $i.Name
+                  } elseif ($c.action -ne $CompC.action) {
+                    if ($Result) {
+                      # Capture result
+                      Add-Result Modified $New $Item 'classes.action' $CompC.action $c.action -Comment $c.id
+                    } else {
+                      # Output 'classes' for modification
+                      $i.Name
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -844,8 +888,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       if ($Obj) {
         if ($Obj.id -ne $Ref.id) {
           # Update identifier to match reference policy
-          Write-Log 'Edit-Policy' ($Item,([PSCustomObject]@{old=$Obj.id;
-            new=$Ref.id} | Format-List | Out-String).Trim() -join "`n")
+          Write-Log 'Edit-Policy' ($Item,([PSCustomObject]@{old=$Obj.id;new=$Ref.id} | Format-List |
+            Out-String).Trim() -join "`n")
           Set-Property $Obj id $Ref.id
         }
         if ($Item -eq 'FirewallPolicy') {
@@ -931,7 +975,46 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
         }
         if ($Obj.settings) {
-          if ($Item -eq 'FirewallPolicy') {
+          if ($Item -eq 'DeviceControlPolicy') {
+            $Edit = Compare-Setting $Obj $Ref $Item
+            if ($Edit.settings.classes.exceptions) {
+              # Modify exceptions and capture result
+              [System.Collections.Generic.List[PSCustomObject]]$Exception = @($Edit.settings.classes.exceptions)
+              [string[]]$Class = $Edit.settings.classes.id | Select-Object -Unique
+              for ($i=0;$i -lt $Exception.Count;$i+=49) {
+                # Add exceptions in groups of 50
+                $g = $Exception[0..49]
+                foreach ($c in $Class) {
+                  @($Edit.settings.classes).Where({$_.id -eq $c}).foreach{
+                    # Add exceptions from group into appropriate class
+                    $_.exceptions = @($g).Where({$_.id -eq $Class})
+                  }
+                  @($Edit.settings.classes).Where({!$_.exceptions}).foreach{
+                    # Remove classes that do not have exceptions to add
+                    $Edit.settings.classes.PSObject.Properties.Remove($_)
+                  }
+                }
+                $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Edit @Param
+                if ($Req) {
+                  # Capture each modified property
+                  Compare-Setting (Compress-Object $Req $Item) $Ref $Item -Result
+                } elseif ($Fail) {
+                  # Capture failure to modify Policy
+                  Add-Result Failed $Obj $Item -Comment $Fail.exception.message -Log 'to modify'
+                }
+              }
+            } elseif ($Edit) {
+              # Modify Policy and capture result
+              $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Edit @Param
+              if ($Req) {
+                # Capture each modified property
+                Compare-Setting (Compress-Object $Req $Item) $Ref $Item -Result
+              } elseif ($Fail) {
+                # Capture failure to modify Policy
+                Add-Result Failed $Obj $Item -Comment $Fail.exception.message -Log 'to modify'
+              }
+            }
+          } elseif ($Item -eq 'FirewallPolicy') {
             $Obj.settings = Compare-Setting $Obj $Ref $Item
             if ($Obj.settings) {
               # Update 'policy_id' under 'settings' with 'id' and modify 'settings'
@@ -1045,7 +1128,13 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               }
             } else {
               # Keep non-existent items under Import and add policies to Modify for changes post-creation
-              if ($p.Key -match 'Policy$') { $Modify.Add($i.PSObject.Copy()) }
+              if ($p.Key -match 'Policy$') {
+                $Modify.Add($i.PSObject.Copy())
+                if ($p.Key -eq 'DeviceControlPolicy') {
+                  # Remove exceptions from initial DeviceControlPolicy creation
+                  if ($i.settings.classes.exceptions) { @($i.settings.classes).foreach{ $_.exceptions = @() }}
+                }
+              }
               $Name = (Select-ObjectName $i $p.Key)
               $Log = if ($Platform) {
                 'Import: {0} {1} "{2}"' -f $p.Key,$Platform,$Name
