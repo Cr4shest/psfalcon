@@ -1308,9 +1308,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             Add-Result Failed $null HostGroup -Log 'to assign'
           }
         } elseif ($Action -match '^(enable|disable)$') {
-          if ($Req) {
+          if ($Req.id) {
             # Capture enable result
             Add-Result Modified $Req $Item enabled $Ref.enabled $Obj.enabled
+          } elseif ($Req) {
+            # Capture enable result
+            Add-Result Modified $Obj $Item enabled $Ref.enabled $Obj.enabled
           } elseif ($Fail) {
             # Capture enable failure
             Add-Result Failed $Req $Item enabled $Ref.enabled $Obj.enabled -Log 'to modify'
