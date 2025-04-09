@@ -241,12 +241,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         property = $Property
         old_value = $Old
         new_value = $New
-        comment = if ($Item.family -and $Item.rule_group.id) {
+        comment = if ($Comment) {
+          $Comment
+        } elseif ($Item.family -and $Item.rule_group.id) {
           'rule_group_id',$Item.rule_group.id -join ':'
         } elseif ($Item.policy_id -and $Item.id) {
           'policy_id',$Item.policy_id -join ':'
-        } else {
-          $Comment
         }
       }
       # Create Result list to contain results when not present and output result
@@ -308,7 +308,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         # Output settings for modification
         if ($Select) { $New.settings }
       } elseif ($Item -eq 'DeviceControlPolicy') {
-        [string[]]$Select = if ($Old) {
+        [object[]]$Select = if ($Old) {
           foreach ($i in @($New.settings.PSObject.Properties)) {
             if ($i.Name -match '^(enforcement_mode|end_user_notification|enhanced_file_metadata)$') {
               if ($i.Value -ne $Old.settings.($i.Name)) {
@@ -316,58 +316,45 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                   # Capture result
                   Add-Result Modified $New $Item $i.Name $Old.settings.($i.Name) $i.Value
                 } else {
-                  # Output modified property name
+                  # Output modified property by name
                   $i.Name
                 }
               }
             } elseif ($i.Name -eq 'classes') {
-              foreach ($c in $i.Value) {
-                $CompC = $Old.settings.($i.Name).Where({$_.id -eq $c.id})
-                if ($CompC) {
-                   $c.exceptions = foreach ($e in $c.exceptions) {
-                    # Check 'exceptions' under 'classes' for new exceptions
-                    [System.Collections.Generic.List[string]]$SelectE = @('match_method','action')
-                    switch ($e.match_method) {
-                      'COMBINED_ID' { $SelectE.Add('combined_id') }
-                      'VID' { $SelectE.Add('vendor_id_decimal') }
-                      'VID_PID' { @('vendor_id_decimal','product_id_decimal').foreach{ $SelectE.Add($_) }}
-                      'VID_PID_SERIAL' {
-                        @('vendor_id_decimal','product_id_decimal','serial_number').foreach{ $SelectE.Add($_) }
+              [string[]]$ClassId = foreach ($c in $i.Value) {
+                if ($c.exceptions) {
+                  if ($Result) {
+                    foreach ($e in $New.settings.classes.exceptions) {
+                      if (!@($Old.settings.classes.exceptions).Where({$_.id -eq $e.id})) {
+                        # Capture result for each new exception
+                        Add-Result Modified $New $Item ($c.id,'exceptions' -join '.') -Comment (
+                          '{0} {1}:{2}' -f $e.action,$e.match_method,(
+                            @(Select-ObjectName $e DeviceControlException).foreach{$e.$_ }) -join '_')
                       }
                     }
-                    $Filter = [scriptblock]::Create(((@($SelectE).foreach{
-                      '$_.{0} -eq "{1}"' -f $_,$e.$_
-                    }) -join ' -and '))
-                    if (!($CompC.exceptions | Where-Object -FilterScript $Filter)) {
-                      if ($Result) {
-                        # Capture result
-                        [string[]]$Id = @($SelectE).Where({$_ -notmatch 'action|match_method'}).foreach{ $e.$_ }
-                        Add-Result Modified $New $Item 'classes.exceptions' $null $e.id -Comment ($e.match_method,
-                          ($Id -join '_') -join ':')
-                      } else {
-                        # Capture exclusions not present in target policy
-                        if ($e.id) { $e.PSObject.Properties.Remove('id') }
-                        $e
-                      }
-                    }
+                  } else {
+                    # Output 'class.id' for modification when new exceptions are present
+                    $c.id
                   }
-                  if ($c.exceptions -and !$Result) {
-                    $i.Name
-                  } elseif ($c.action -ne $CompC.action) {
+                } else {
+                  # Check existing class under DeviceControlPolicy in target CID to compare 'action' value
+                  $CompC = $Old.settings.($i.Name).Where({$_.id -eq $c.id})
+                  if ($CompC -and $c.action -ne $CompC.action) {
                     if ($Result) {
-                      # Capture result
-                      Add-Result Modified $New $Item 'classes.action' $CompC.action $c.action -Comment $c.id
+                      # Capture result for modified 'action'
+                      Add-Result Modified $New $Item ($c.id,'action' -join '.') $CompC.action $c.action
                     } else {
-                      # Output 'classes' for modification
-                      $i.Name
+                      # Output 'class.id' for modification
+                      $c.id
                     }
                   }
                 }
               }
+              if ($ClassId) { @{l='classes';e={,@($_.classes).Where({$ClassId -contains $_.id})}} }
             }
           }
         }
-        # Output settings to be modified by property name
+        # Output settings to be modified
         if ($Select) { $New.settings | Select-Object $Select }
       } elseif ($Item -eq 'FirewallPolicy') {
         [string[]]$PropList = 'default_inbound','default_outbound','enforce','local_logging','platform_id',
@@ -644,8 +631,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           # FileVantageRule with FileVantageRuleGroup
           $UserDict.Select += 'FileVantageRule'
         }
-        if ($UserDict.Select -contains 'FirewallGroup' -and $UserDict.Select -notcontains
-        'FirewallRule') {
+        if ($UserDict.Select -contains 'FirewallGroup' -and $UserDict.Select -notcontains 'FirewallRule') {
           # FirewallRule with FirewallGroup
           $UserDict.Select += 'FirewallRule'
         }
@@ -977,24 +963,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         if ($Obj.settings) {
           if ($Item -eq 'DeviceControlPolicy') {
             $Edit = Compare-Setting $Obj $Ref $Item
-            if ($Edit.settings.classes.exceptions) {
-              # Modify exceptions and capture result
-              [System.Collections.Generic.List[PSCustomObject]]$Exception = @($Edit.settings.classes.exceptions)
-              [string[]]$Class = $Edit.settings.classes.id | Select-Object -Unique
-              for ($i=0;$i -lt $Exception.Count;$i+=49) {
+            if ($Edit.classes.exceptions) {
+              for ($i=0;$i -lt ($Edit.classes.exceptions | Measure-Object).Count;$i+=50) {
                 # Add exceptions in groups of 50
-                $g = $Exception[0..49]
-                foreach ($c in $Class) {
-                  @($Edit.settings.classes).Where({$_.id -eq $c}).foreach{
-                    # Add exceptions from group into appropriate class
-                    $_.exceptions = @($g).Where({$_.id -eq $Class})
-                  }
-                  @($Edit.settings.classes).Where({!$_.exceptions}).foreach{
-                    # Remove classes that do not have exceptions to add
-                    $Edit.settings.classes.PSObject.Properties.Remove($_)
+                $Clone = $Edit.PSObject.Copy()
+                $Group = @($Edit.classes.exceptions)[$i..($i+49)]
+                foreach ($Class in $Group.class) {
+                  @($Clone.classes).Where({$_.id -eq $Class}).foreach{
+                    $_.exceptions = @($Group).Where({$_.class -eq $Class})
                   }
                 }
-                $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Edit @Param
+                $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Clone @Param
                 if ($Req) {
                   # Capture each modified property
                   Compare-Setting (Compress-Object $Req $Item) $Ref $Item -Result
@@ -1004,7 +983,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 }
               }
             } elseif ($Edit) {
-              # Modify Policy and capture result
+              # Modify DeviceControlPolicy class 'action' and capture result
               $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Edit @Param
               if ($Req) {
                 # Capture each modified property
@@ -1077,7 +1056,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     }
     function Find-Import {
       # Filter Import list and create Modify list
-      foreach ($p in $Config.GetEnumerator().Where({$_.Key -ne 'FirewallRule' -and $_.Value.Import})) {
+      foreach ($p in $Config.GetEnumerator().Where({$_.Key -notmatch $NoEnum -and $_.Value.Import})) {
         $Import = [System.Collections.Generic.List[PSCustomObject]]@()
         $Modify = [System.Collections.Generic.List[PSCustomObject]]@()
         foreach ($i in $p.Value.Import) {
@@ -1128,14 +1107,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               }
             } else {
               # Keep non-existent items under Import and add policies to Modify for changes post-creation
-              if ($p.Key -match 'Policy$') {
-                $Modify.Add($i.PSObject.Copy())
-                if ($p.Key -eq 'DeviceControlPolicy') {
-                  # Remove exceptions from initial DeviceControlPolicy creation
-                  if ($i.settings.classes.exceptions) { @($i.settings.classes).foreach{ $_.exceptions = @() }}
-                }
-              }
-              $Name = (Select-ObjectName $i $p.Key)
+              if ($p.Key -match 'Policy$') { $Modify.Add($i.PSObject.Copy()) }
+              $Name = Select-ObjectName $i $p.Key
               $Log = if ($Platform) {
                 'Import: {0} {1} "{2}"' -f $p.Key,$Platform,$Name
               } else {
@@ -1146,7 +1119,32 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             }
           }
         }
-        if ($Modify) { $p.Value['Modify'] = $Modify }
+        if ($Modify) {
+          if ($p.Key -eq 'DeviceControlPolicy') {
+            # Add DeviceControlPolicy exceptions under class in Modify list when not present in target CID
+            foreach ($i in $Modify) {
+              foreach ($c in $i.settings.classes) {
+                [System.Collections.Generic.List[PSCustomObject]]$c.exceptions = @()
+                foreach ($e in @($p.Value.ExImp).Where({$_.policy_id -eq $i.id -and $_.class -eq $c.id})) {
+                  $Filter = Write-SelectFilter $e DeviceControlException
+                  if ($Filter) {
+                    if (!($p.Value.ExCid | Where-Object -FilterScript $Filter)) {
+                      # Exclude 'id' and 'policy_id' from exception when adding to class
+                      $c.exceptions.Add(($e | Select-Object @($e.PSObject.Properties.Name).Where({
+                        $_ -notmatch '^(id|policy_id)$'})))
+                    } else {
+                      # Capture result for ignored DeviceControlPolicy exceptions
+                      Add-Result Ignored $i $p.Key ($c.id,'exceptions' -join '.') -Comment ($e.match_method,((
+                        @(Select-ObjectName $e DeviceControlException).foreach{ $e.$_ }) -join '_') -join ':')
+                    }
+                  }
+                }
+              }
+            }
+          }
+          # Capture list of items to be modified
+          $p.Value['Modify'] = $Modify
+        }
         $p.Value['Import'] = $Import
       }
     }
@@ -1162,6 +1160,16 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           Select-Object build,sensor_version,stage
       } else {
         $null
+      }
+    }
+    function Get-DcException ([PSCustomObject[]]$Obj) {
+      foreach ($i in $Obj) {
+        # Generate list of exceptions from a DeviceControlPolicy
+        @($i.settings.classes.exceptions).foreach{
+          [PSCustomObject]$_ | Select-Object @{l='policy_id';e={$i.id}},id,class,vendor_id,vendor_id_decimal,
+          vendor_name,product_id,product_id_decimal,product_name,serial_number,combined_id,action,match_method,
+          description
+        }
       }
     }
     function Get-FromCid {
@@ -1222,7 +1230,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             & "Get-Falcon$($p.Key)" @Param
           }
           if ($Ref) {
-            @(Compress-Object $Ref $p.Key).foreach{ $Cid.Add($_) }
+            if ($p.Key -eq 'DeviceControlPolicy') {
+              $p.Value['ExCid'] = [System.Collections.Generic.List[PSCustomObject]]@()
+              @(Compress-Object $Ref $p.Key).foreach{
+                # Copy exceptions from policy to ExCid list for analysis and add to Cid
+                @(Get-DcException $_).foreach{ $p.Value.ExCid.Add($_) }
+                $Cid.Add($_)
+              }
+            } else {
+              # Remove unnecessary properties and add to CID list
+              @(Compress-Object $Ref $p.Key).foreach{ $Cid.Add($_) }
+            }
           } elseif ($Fail) {
             # Notify of failure to retrieve
             Add-Result Failed -Type $p.Key -Log 'to retrieve'
@@ -1271,8 +1289,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 New-Object System.IO.StreamReader($Filename.Open())).ReadToEnd()
               if ($Json) {
                 # Add required properties from Json as Import
-                $Output[$Item] = @{ Import = [System.Collections.Generic.List[PSCustomObject]]@() }
-                @(Compress-Object $Json $Item).foreach{ $Output.$Item.Import.Add($_) }
+                $Output[$Item] = @{
+                  Import = [System.Collections.Generic.List[PSCustomObject]]@(Compress-Object $Json $Item)
+                }
+                if ($Item -eq 'DeviceControlPolicy') {
+                  # Create list for imported DeviceControlPolicy exceptions and remove from imports
+                  $Output.$Item['ExImp'] = [System.Collections.Generic.List[PSCustomObject]]@(
+                    Get-DcException $Output.$Item.Import)
+                  @($Output.$Item.Import.settings.classes).foreach{ $_.exceptions = @() }
+                }
                 Write-Host ('[Import-FalconConfig] Successfully imported "{0}".' -f $Item)
               }
             } else {
@@ -1477,7 +1502,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     }
     function Select-ObjectName ([PSCustomObject]$Obj,[string]$Item) {
       # Select a name to display in results and verbose output
-      if ($Obj.value) {
+      if ($Item -eq 'DeviceControlException') {
+        switch ($Obj.match_method) {
+          # Output DeviceControlPolicy exceptions properties for filtering or logging names
+          'COMBINED_ID' { 'combined_id' }
+          'VID' { 'vendor_id_decimal' }
+          'VID_PID' { 'vendor_id_decimal','product_id_decimal' }
+          'VID_PID_SERIAL' { 'vendor_id_decimal','product_id_decimal','serial_number' }
+        }
+      } elseif ($Obj.value) {
         if ($Obj.type) { $Obj.type,$Obj.value -join ':' } else { $Obj.value }
       } elseif ($Obj.precedence -and $Item -eq 'FileVantageRule') {
         $Obj.precedence
@@ -1486,7 +1519,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       }
     }
     function Set-IdRef ([PSCustomObject[]]$Obj,[string]$Item,[switch]$Update) {
-      if ($Item -ne 'FirewallRule') {
+      if ($Item -notmatch $NoEnum) {
         if ($Update) {
           foreach ($i in $Obj) {
             # Check for matching reference using selected properties and filter out matching 'new' identifier
@@ -1716,50 +1749,58 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     function Write-SelectFilter ([object]$Obj,[string]$Item,[switch]$Ref) {
       # Create FilterScript to select matching item
       if ($Obj) {
-          [string[]]$Output = switch ($Obj) {
-          { $_.platforms } {
-            if ($Ref) {
-              # Use 'os' to filter 'platforms' for an identifier reference
-              "($((@($_.platforms).foreach{ '$_.os -contains "{0}"' -f $_ }) -join ' -and '))"
-            } else {
-              "($((@($_.platforms).foreach{ '$_.platforms -contains "{0}"' -f $_ }) -join ' -and '))"
-            }
-          }
-          { $_.platform_name } {
-            if ($Ref) {
-              # Use 'os' to filter 'platform_name' for an identifier reference
-              '$_.os -contains "{0}"' -f $_.platform_name
-            } else {
-              '$_.platform_name -eq "{0}"' -f $_.platform_name
-            }
-          }
-          { $_.platform } {
-            if ($Ref) {
-              # Use 'os' to filter 'platform' for an identifier reference
-              '$_.os -contains "{0}"' -f $_.platform
-            } else {
-              '$_.platform -eq "{0}"' -f $_.platform
-            }
-          }
-          { $_.name } { '$_.name -eq "{0}"' -f $_.name }
-          { $_.path } { '$_.path -eq "{0}"' -f $_.path }
-          { $_.precedence } { '$_.precedence -eq "{0}"' -f $_.precedence }
-          { $_.ruletype_id } { '$_.ruletype_id -eq "{0}"' -f $_.ruletype_id }
-          { $_.type } { '$_.type -eq "{0}"' -f $_.type }
-          { $_.value } { '$_.value -eq "{0}"' -f $_.value }
-        }
-        if ($Output) {
-          # Add 'cid' if 'TargetCid' matches, then create FilterScript
-          if ($HomeCid -and $Obj.cid -eq $HomeCid) { $Output += '$_.cid -eq "{0}"' -f $Obj.cid }
-          [scriptblock]::Create(($Output -join ' -and '))
+        if ($Item -eq 'DeviceControlException') {
+          # Use 'match_method', 'action' and relevant 'name' properties to create filter
+          [System.Collections.Generic.List[string]]$Select = @('match_method','action')
+          @(Select-ObjectName $Obj $Item).foreach{ $Select.Add($_) }
+          [scriptblock]::Create("($((@($Select).foreach{ '$_.{0} -eq "{1}"' -f $_,$Obj.$_}) -join ' -and '))")
         } else {
-          # Log when filter is not created
-          Write-Log 'Write-SelectFilter' (
-            'Unable to determine filter critera for "{0}"' -f (Select-ObjectName $Obj $Item))
+          [string[]]$Output = switch ($Obj) {
+            { $_.platforms } {
+              if ($Ref) {
+                # Use 'os' to filter 'platforms' for an identifier reference
+                "($((@($_.platforms).foreach{ '$_.os -contains "{0}"' -f $_ }) -join ' -and '))"
+              } else {
+                "($((@($_.platforms).foreach{ '$_.platforms -contains "{0}"' -f $_ }) -join ' -and '))"
+              }
+            }
+            { $_.platform_name } {
+              if ($Ref) {
+                # Use 'os' to filter 'platform_name' for an identifier reference
+                '$_.os -contains "{0}"' -f $_.platform_name
+              } else {
+                '$_.platform_name -eq "{0}"' -f $_.platform_name
+              }
+            }
+            { $_.platform } {
+              if ($Ref) {
+                # Use 'os' to filter 'platform' for an identifier reference
+                '$_.os -contains "{0}"' -f $_.platform
+              } else {
+                '$_.platform -eq "{0}"' -f $_.platform
+              }
+            }
+            { $_.name } { '$_.name -eq "{0}"' -f $_.name }
+            { $_.path } { '$_.path -eq "{0}"' -f $_.path }
+            { $_.precedence } { '$_.precedence -eq "{0}"' -f $_.precedence }
+            { $_.ruletype_id } { '$_.ruletype_id -eq "{0}"' -f $_.ruletype_id }
+            { $_.type } { '$_.type -eq "{0}"' -f $_.type }
+            { $_.value } { '$_.value -eq "{0}"' -f $_.value }
+          }
+          if ($Output) {
+            # Add 'cid' if 'TargetCid' matches, then create FilterScript
+            if ($HomeCid -and $Obj.cid -eq $HomeCid) { $Output += '$_.cid -eq "{0}"' -f $Obj.cid }
+            [scriptblock]::Create(($Output -join ' -and '))
+          } else {
+            # Log when filter is not created
+            Write-Log 'Write-SelectFilter' (
+              'Unable to determine filter critera for "{0}"' -f (Select-ObjectName $Obj $Item))
+          }
         }
       }
     }
     [string]$ArchivePath = $Script:Falcon.Api.Path($PSBoundParameters.Path)
+    [string]$NoEnum = '^(FirewallRule)$'
     [string]$OutputFile = Join-Path (Get-Location).Path "FalconConfig_$(Get-Date -Format FileDateTime).csv"
     [regex]$PolicyDefault = '^(platform_default|Default Policy \((Linux|Mac|Windows)\))$'
     [string]$UaComment = ((Show-FalconModule).UserAgent,'Import-FalconConfig' -join ': ')
@@ -1876,7 +1917,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           if ($Fail) { Add-Result Failed $i $p.Key -Comment $Fail.exception.message -Log 'to create' }
         }
       }
-      if ($p.Key -ne 'FirewallRule') { Clear-ConfigList $p.Key Import }
+      if ($p.Key -notmatch $NoEnum) { Clear-ConfigList $p.Key Import }
     }
     # Create Policy
     foreach ($p in $Config.GetEnumerator().Where({$_.Key -match 'Policy$' -and $_.Value.Import})) {
