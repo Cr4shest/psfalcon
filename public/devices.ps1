@@ -576,9 +576,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconHostGroupAction
       [void]$PSBoundParameters.Remove('HostId')
       for ($i=0;$i -lt $List.Count;$i+=500) {
         $IdString = (@($List[$i..($i+499)]).foreach{ "'$_'" }) -join ','
-        $PSBoundParameters['action_parameters'] = @(
-          @{ name = 'filter'; value = "(device_id:[$IdString])" }
-        )
+        $PSBoundParameters['action_parameters'] = @(@{ name = 'filter'; value = "(device_id:[$IdString])" })
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }
