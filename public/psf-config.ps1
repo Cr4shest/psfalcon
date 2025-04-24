@@ -82,7 +82,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
                 foreach ($i in @($Config).Where({$_.group_type -match '^static'})) {
                   # Split 'assignment_rule' into list of hostname or device_id values
                   $RuleList = @($i.assignment_rule -split '(device_id:|hostname:)').Where({
-                    $_ -match '\[.+\]'}) -replace "^\[|'|\]$" -split ','
+                    $_ -match '\[.+\]'}) -replace "^\[|'|\],?$" -split ','
                   $Member = if ($RuleList -and $i.group_type -eq 'static') {
                     # Match 'members' by hostname
                     @($HostList).Where({$RuleList -contains $_.hostname})
