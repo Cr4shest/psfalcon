@@ -27,7 +27,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
   begin {
     function Get-ItemContent ([string]$String) {
       # Request content for provided 'Item'
-      Write-Host "[Export-FalconConfig] Exporting '$String'..."
+      Write-Host ('[Export-FalconConfig] Exporting "{0}"...' -f $String)
       $ConfigFile = Join-Path $Location "$String.json"
       $Config = if ($String -match '^FileVantage(Policy|RuleGroup)$') {
         [string]$Filter = if ($String -eq 'FileVantagePolicy') {
@@ -56,7 +56,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
       if ($Config) {
         if ($String -eq 'FirewallPolicy') {
           # Export firewall settings
-          Write-Host "[Export-FalconConfig] Exporting 'FirewallSetting'..."
+          Write-Host '[Export-FalconConfig] Exporting "FirewallSetting"...'
           $Setting = Get-FalconFirewallSetting -Id $Config.id 2>$null
           foreach ($i in $Setting) {
             ($Config | Where-Object { $_.id -eq $i.policy_id }).PSObject.Properties.Add((
@@ -68,8 +68,37 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
           foreach ($i in $Config) {
             $RuleId = $i.assigned_rules.id | Where-Object { ![string]::IsNullOrWhiteSpace($_) }
             if ($RuleId) {
-              Write-Host "[Export-FalconConfig] Exporting rules for $($i.type) group '$($i.name)'..."
+              Write-Host ('[Export-FalconConfig] Exporting rules for {0} group "{1}"...' -f $i.type,$i.name)
               $i.assigned_rules = @(Get-FalconFileVantageRule -RuleGroupId $i.id -Id $RuleId)
+            }
+          }
+        } elseif ($String -eq 'HostGroup') {
+          if ($Config.group_type -match '^static') {
+            Write-Host '[Export-FalconConfig] Collecting list of hosts to match "HostGroup" members...'
+            try {
+              [System.Collections.Generic.List[object]]$HostList = Get-FalconHost -Detailed -All -Field device_id,
+                platform_name,hostname
+              if ($HostList) {
+                foreach ($i in @($Config).Where({$_.group_type -match '^static'})) {
+                  # Split 'assignment_rule' into list of hostname or device_id values
+                  $RuleList = @($i.assignment_rule -split '(device_id:|hostname:)').Where({
+                    $_ -match '\[.+\]'}) -replace "^\[|'|\]$" -split ','
+                  $Member = if ($RuleList -and $i.group_type -eq 'static') {
+                    # Match 'members' by hostname
+                    @($HostList).Where({$RuleList -contains $_.hostname})
+                  } elseif ($Rulelist -and $i.group_type -eq 'staticByID') {
+                    # Match 'members' by device_id
+                    @($HostList).Where({$RuleList -contains $_.device_id})
+                  }
+                  if ($Member) {
+                    # Add selected host info as 'members'
+                    Write-Host ('[Export-FalconConfig] Appending members to HostGroup "{0}"...' -f $i.name)
+                    $i.PSObject.Properties.Add((New-Object PSNoteProperty('members',@($Member))))
+                  }
+                }
+              }
+            } catch {
+              Write-Error 'Unable to collect list of hosts. Verify "Hosts: Read" permission.'
             }
           }
         }
@@ -329,7 +358,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                         # Capture result for each new exception
                         Add-Result Modified $New $Item ($c.id,'exceptions' -join '.') -Comment (
                           '{0} {1}:{2}' -f $e.action,$e.match_method,(
-                            @(Select-ObjectName $e DeviceControlException).foreach{$e.$_ }) -join '_')
+                            @(Select-ObjectName $e DeviceControlException).foreach{$e.$_ }) -join '_') ## this isn't displaying the action in the output
                       }
                     }
                   } else {
@@ -1889,6 +1918,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       } elseif ($p.Key -eq 'Ioc') {
         # Create Ioc
         do {
+          
+          ## Update host groups for IOCs, add IOCs that aren't "global" and don't have groups to "failed" result
+
           foreach ($i in ($p.Value.Import | New-FalconIoc -EA 0 -EV Fail)) {
             if ($i.message_type -and $i.message) {
               # Add individual failure to output
