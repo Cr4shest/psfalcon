@@ -467,8 +467,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 if ($OldArr.Where({$_.id -eq $i.id}).value.$n -ne $i.value.$n) {
                   if ($Result) {
                     # Capture modified result for sub-settings
-                    Add-Result Modified $New $Item ($i.id,$v -join ':') @($OldArr).Where({$_.id -eq
-                      $i.id}).value.$v $Item.value.$v
+                    Add-Result Modified $New $Item ($i.id,$n -join ':') @($OldArr).Where({$_.id -eq
+                      $i.id}).value.$n $Item.value.$n
                   } else {
                     # Output setting to be modified
                     Write-Log 'Compare-Setting' (($Item,$New.id -join ': '),([PSCustomObject]@{id=$i.id;old=(
@@ -1425,8 +1425,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
         } elseif ($Item -eq 'FirewallGroup') {
           foreach ($i in $Config.$Item.Import) {
-            if ($i.rule_ids) {
-              [object[]]$Rule = foreach ($r in $i.rule_ids) {
+            [System.Collections.Generic.List[object]]$Rule = if ($i.rule_ids) {
+              foreach ($r in $i.rule_ids) {
                 # Select each FirewallRule from import using 'family' as 'id' value (excluding 'deleted')
                 @($Config.FirewallRule.Import).Where({$_.family -eq $r -and $_.deleted -eq $false}).foreach{
                   # Trim rule names to 64 characters to meet API restriction
@@ -1434,16 +1434,16 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                   $_
                 }
               }
-              if ($Rule) {
-                # Use collection of rules as 'Rule' and remove 'rule_ids'
-                [void]$i.PSObject.Properties.Remove('rule_ids')
-                Set-Property $i rules $Rule
-                Write-Log 'New-Group' ('Selected {0} rules for {1} "{2}".' -f ($Rule | Measure-Object).Count,
-                  $Item,(Select-ObjectName $i $Item))
-              }
             }
-            # Create FirewallGroup
-            $Req = $i | New-FalconFirewallGroup @Param
+            $Req = if ($Rule) {
+              # Use collection of rules as 'Rule' and create FirewallGroup
+              Write-Log 'New-Group' ('Selected {0} rules for {1} "{2}".' -f ($Rule | Measure-Object).Count,
+                $Item,(Select-ObjectName $i $Item))
+              $i | New-FalconFirewallGroup -Rule $Rule @Param
+            } else {
+              # Create FirewallGroup
+              $i | New-FalconFirewallGroup @Param
+            }
             if ($Req) {
               # Update identifier and reference, capture result
               Set-Property $i id $Req
