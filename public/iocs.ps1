@@ -10,10 +10,10 @@ One or more indicators to modify in a single request
 Action to perform when a host observes the indicator
 .PARAMETER Platform
 Operating system platform
-.PARAMETER Source
-Origination source
 .PARAMETER Severity
 Severity level
+.PARAMETER Source
+Origination source
 .PARAMETER Description
 Indicator description
 .PARAMETER Filename
@@ -27,7 +27,7 @@ Host group identifier
 .PARAMETER AppliedGlobally
 Assign to all host groups
 .PARAMETER Expiration
-Expiration date. When an indicator expires, its action is set to 'no_action' but it remains in your indicator list.
+Expiration date and time (UTC ISO 8601). When an indicator expires it is set to 'no_action'.
 .PARAMETER FromParent
 Inheritance from parent CID
 .PARAMETER Comment
@@ -53,10 +53,10 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconIoc
     [Alias('Platforms')]
     [string[]]$Platform,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=3)]
+    [string]$Severity,
+    [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=4)]
     [ValidateRange(1,256)]
     [string]$Source,
-    [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=4)]
-    [string]$Severity,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=5)]
     [string]$Description,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=6)]
@@ -66,7 +66,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconIoc
     [Alias('tags')]
     [string[]]$Tag,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=8)]
-    [ValidateSet('no_action','allow','detect','prevent',IgnoreCase=$false)]
+    [ValidateSet('allow','detect','no_action','prevent',IgnoreCase=$false)]
     [Alias('mobile_action')]
     [string]$MobileAction,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=9)]
@@ -77,7 +77,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconIoc
     [Alias('applied_globally')]
     [boolean]$AppliedGlobally,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=11)]
-    [ValidatePattern('^(\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$')]
+    [ValidatePattern('^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')]
     [string]$Expiration,
     [Parameter(ParameterSetName='/iocs/entities/indicators/v1:patch',Position=13)]
     [Alias('from_parent')]
