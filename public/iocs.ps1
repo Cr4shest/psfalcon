@@ -104,7 +104,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconIoc
       Max = 2000
     }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
@@ -441,7 +441,7 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconIoc
       Max = 2000
     }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {

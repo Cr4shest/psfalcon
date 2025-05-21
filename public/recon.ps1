@@ -115,21 +115,19 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconReconNotification
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = '/recon/entities/notifications/v1:patch' }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
-      @($InputObject).foreach{
-        # Filter to defined properties
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.root
-        $List.Add($i)
-      }
+      # Filter to defined properties
+      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.root)) }
     } else {
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
   end {
     if ($List) {
+      # Modify in groups of 100
       [void]$PSBoundParameters.Remove('InputObject')
       $Param.Format = @{ Body = @{ root = @('raw_array') } }
       for ($i = 0; $i -lt $List.Count; $i += 100) {
@@ -206,21 +204,19 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconReconRule
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = '/recon/entities/rules/v1:patch' }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
-      @($InputObject).foreach{
-        # Filter to defined properties
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.root
-        $List.Add($i)
-      }
+      # Filter to defined properties
+      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.root)) }
     } else {
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
   end {
     if ($List) {
+      # Modify in groups of 100
       [void]$PSBoundParameters.Remove('InputObject')
       $Param.Format = @{ Body = @{ root = @('raw_array') } }
       for ($i = 0; $i -lt $List.Count; $i += 100) {
@@ -781,21 +777,19 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconReconRule
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = '/recon/entities/rules/v1:post' }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
-      @($InputObject).foreach{
-        # Filter to defined properties
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.root
-        $List.Add($i)
-      }
+      # Filter to defined properties
+      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.root)) }
     } else {
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
   end {
     if ($List) {
+      # Create in groups of 100
       [void]$PSBoundParameters.Remove('InputObject')
       $Param.Format = @{ Body = @{ root = @('raw_array') } }
       for ($i = 0; $i -lt $List.Count; $i += 100) {
