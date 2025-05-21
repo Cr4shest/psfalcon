@@ -60,7 +60,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconFirewallGroup
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($DiffOperation) {
@@ -899,15 +899,13 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconFirewallGroup
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($Rule) {
       @($Rule).foreach{
         # Filter to defined 'rules' properties and remove empty values
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.rules
-        Remove-EmptyValue $i name,description,comment
-        $List.Add($i)
+        $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.rules))
       }
     }
   }
