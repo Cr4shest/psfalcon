@@ -3872,6 +3872,8 @@
         "root": [
           "cloud_ml_level_detection",
           "cloud_ml_level_prevention",
+          "cloud_pup_adware_level_detection",
+          "cloud_pup_adware_level_prevention",
           "cpu_priority",
           "description",
           "endpoint_notification",
@@ -3898,10 +3900,45 @@
     }
   },
   "/ods/entities/scheduled-scans/v1": {
+    "delete": {
+      "query": [
+        "ids",
+        "filter"
+      ]
+    },
     "get": {
       "query": [
         "ids"
       ]
+    },
+    "post": {
+      "body": {
+        "root": [
+          "cloud_ml_level_detection",
+          "cloud_ml_level_prevention",
+          "cloud_pup_adware_level_detection",
+          "cloud_pup_adware_level_prevention",
+          "cpu_priority",
+          "description",
+          "endpoint_notification",
+          "file_paths",
+          "host_groups",
+          "initiated_from",
+          "max_duration",
+          "max_file_size",
+          "pause_duration",
+          "quarantine",
+          "scan_exclusions",
+          "scan_inclusions",
+          "sensor_ml_level_detection",
+          "sensor_ml_level_prevention"
+        ],
+        "schedule": [
+          "ignored_by_channelfile",
+          "interval",
+          "start_timestamp"
+        ]
+      }
     }
   },
   "/ods/queries/malicious-files/v1": {
