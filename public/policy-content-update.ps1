@@ -205,7 +205,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconContentPolicyAction
   [CmdletBinding(DefaultParameterSetName='/policy/entities/content-update-actions/v1:post',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/policy/entities/content-update-actions/v1:post',Mandatory,Position=1)]
-    [ValidateSet('add-host-group','disable','enable','remove-host-group',IgnoreCase=$false)]
+    [ValidateSet('add-host-group','disable','enable','override-allow','override-pause','override-revert',
+      'remove-host-group','remove-pinned-content-version','set-pinned-content-version',IgnoreCase=$false)]
     [Alias('action_name')]
     [string]$Name,
     [Parameter(ParameterSetName='/policy/entities/content-update-actions/v1:post',Position=2)]
@@ -214,6 +215,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Invoke-FalconContentPolicyAction
     [Parameter(ParameterSetName='/policy/entities/content-update-actions/v1:post',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline,Position=3)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [Alias('ids')]
     [string[]]$Id
   )
   begin {
