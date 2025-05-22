@@ -4044,16 +4044,6 @@
       ]
     }
   },
-  "/policy/combined/device-control/v1": {
-    "get": {
-      "query": [
-        "filter",
-        "offset",
-        "limit",
-        "sort"
-      ]
-    }
-  },
   "/policy/combined/firewall-members/v1": {
     "get": {
       "query": [
@@ -4227,22 +4217,6 @@
     }
   },
   "/policy/entities/device-control/v1": {
-    "get": {
-      "query": [
-        "ids"
-      ]
-    },
-    "post": {
-      "body": {
-        "resources": [
-          "clone_id",
-          "description",
-          "name",
-          "platform_name",
-          "settings"
-        ]
-      }
-    },
     "delete": {
       "query": [
         "ids"
@@ -4257,6 +4231,24 @@
           "settings"
         ]
       }
+    },
+    "post": {
+      "body": {
+        "resources": [
+          "clone_id",
+          "description",
+          "name",
+          "platform_name",
+          "settings"
+        ]
+      }
+    }
+  },
+  "/policy/entities/device-control/v2": {
+    "get": {
+      "query": [
+        "ids"
+      ]
     }
   },
   "/policy/entities/firewall-precedence/v1": {

@@ -133,8 +133,6 @@ Maximum number of results per request
 Include additional properties
 .PARAMETER Offset
 Position to begin retrieving results
-.PARAMETER Default
-Retrieve default Device Control policy, including notification content
 .PARAMETER Detailed
 Retrieve detailed information
 .PARAMETER All
@@ -146,39 +144,31 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDeviceControlPolicy
 #>
   [CmdletBinding(DefaultParameterSetName='/policy/queries/device-control/v1:get',SupportsShouldProcess)]
   param(
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:get',Mandatory,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:get',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=1)]
     [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=2)]
     [ValidateSet('created_by.asc','created_by.desc','created_timestamp.asc','created_timestamp.desc',
       'enabled.asc','enabled.desc','modified_by.asc','modified_by.desc','modified_timestamp.asc',
       'modified_timestamp.desc','name.asc','name.desc','platform_name.asc','platform_name.desc',
       'precedence.asc','precedence.desc',IgnoreCase=$false)]
     [string]$Sort,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=3)]
     [ValidateRange(1,5000)]
     [int32]$Limit,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:get',Position=2)]
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=4)]
     [ValidateSet('members',IgnoreCase=$false)]
     [string[]]$Include,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get')]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [int32]$Offset,
-    [Parameter(ParameterSetName='/policy/entities/default-device-control/v1:get',Mandatory)]
-    [switch]$Default,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [switch]$Detailed,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get')]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [switch]$All,
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
