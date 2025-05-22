@@ -115,34 +115,34 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconRole
       ValueFromPipelineByPropertyName,ValueFromPipeline)]
     [Alias('ids','roles','role_id')]
     [string[]]$Id,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Mandatory)]
     [ValidatePattern('^[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}$')]
     [Alias('user_uuid','uuid')]
     [string]$UserId,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=1)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Position=1)]
     [Parameter(ParameterSetName='/user-management/entities/roles/v1:get',Position=2)]
     [Parameter(ParameterSetName='/user-management/queries/roles/v1:get')]
     [ValidatePattern('^[a-fA-F0-9]{32}(-\w{2})?$')]
     [string]$Cid,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=2)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Position=2)]
     [Alias('direct_only')]
     [boolean]$DirectOnly,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=3)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Position=3)]
     [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Position=4)]
     [ValidateSet('cid|asc','cid|desc','role_name|asc','role_name|desc','type|asc','type|desc',IgnoreCase=$false)]
     [string]$Sort,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get',Position=5)]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get',Position=5)]
     [ValidateRange(1,500)]
     [int]$Limit,
     [Parameter(ParameterSetName='/user-management/queries/roles/v1:get')]
     [switch]$Detailed,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get')]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get')]
     [string]$Offset,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get')]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get')]
     [switch]$All,
-    [Parameter(ParameterSetName='/user-management/combined/user-roles/v1:get')]
+    [Parameter(ParameterSetName='/user-management/combined/user-roles/v2:get')]
     [switch]$Total
   )
   begin {

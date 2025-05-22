@@ -5720,7 +5720,7 @@
       ]
     }
   },
-  "/user-management/combined/user-roles/v1": {
+  "/user-management/combined/user-roles/v2": {
     "get": {
       "query": [
         "user_uuid",
