@@ -4221,27 +4221,6 @@
       "query": [
         "ids"
       ]
-    },
-    "patch": {
-      "body": {
-        "resources": [
-          "description",
-          "id",
-          "name",
-          "settings"
-        ]
-      }
-    },
-    "post": {
-      "body": {
-        "resources": [
-          "clone_id",
-          "description",
-          "name",
-          "platform_name",
-          "settings"
-        ]
-      }
     }
   },
   "/policy/entities/device-control/v2": {
@@ -4249,6 +4228,29 @@
       "query": [
         "ids"
       ]
+    },
+    "patch": {
+      "body": {
+        "policies": [
+          "bluetooth_settings",
+          "description",
+          "id",
+          "name",
+          "usb_settings"
+        ]
+      }
+    },
+    "post": {
+      "body": {
+        "policies": [
+          "bluetooth_settings",
+          "clone_id",
+          "description",
+          "name",
+          "platform_name",
+          "usb_settings"
+        ]
+      }
     }
   },
   "/policy/entities/firewall-precedence/v1": {
