@@ -1,3 +1,66 @@
+function Edit-FalconDeviceControlClass {
+<#
+.SYNOPSIS
+Update device control policys classes (USB and Bluetooth)
+.DESCRIPTION
+Requires 'Device control policies: Write'.
+.PARAMETER InputObject
+One or more policy identifiers and class objects to modify in a single request
+.PARAMETER BluetoothClass
+Bluetooth class modifications and exceptions
+.PARAMETER UsbClass
+USB class modifications and exceptions
+.PARAMETER Id
+Policy identifier
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlClass
+#>
+  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control-classes/v1:patch',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='Pipeline',Mandatory,ValueFromPipeline)]
+    [ValidateScript({
+      Confirm-Parameter $_ 'Edit-FalconDeviceControlClass' '/policy/entities/device-control-classes/v1:patch'
+    })]
+    [Alias('policies','Array')]
+    [object[]]$InputObject,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Mandatory,Position=1)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [string]$Id,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Position=2)]
+    [Alias('bluetooth_classes')]
+    [object]$BluetoothClass,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Position=3)]
+    [Alias('usb_classes')]
+    [object]$UsbClass
+  )
+  begin {
+    $Param = @{
+      Command = $MyInvocation.MyCommand.Name
+      Endpoint = '/policy/entities/device-control-classes/v1:patch'
+    }
+    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
+  }
+  process {
+    if ($InputObject) {
+      # Filter to defined 'policies' properties
+      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.policies)) }
+    } else {
+      Invoke-Falcon @Param -UserInput $PSBoundParameters
+    }
+  }
+  end {
+    if ($List) {
+      # Modify in groups of 100
+      [void]$PSBoundParameters.Remove('InputObject')
+      $Param.Format = @{ Body = @{ root = @('policies') } }
+      for ($i = 0; $i -lt $List.Count; $i += 100) {
+        $PSBoundParameters['policies'] = @($List[$i..($i + 99)])
+        Invoke-Falcon @Param -UserInput $PSBoundParameters
+      }
+    }
+  }
+}
 function Edit-FalconDeviceControlPolicy {
 <#
 .SYNOPSIS

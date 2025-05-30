@@ -4206,6 +4206,17 @@
       }
     }
   },
+  "/policy/entities/device-control-classes/v1": {
+    "patch": {
+      "body": {
+        "policies": [
+          "bluetooth_classes",
+          "id",
+          "usb_classes"
+        ]
+      }
+    }
+  },
   "/policy/entities/device-control-precedence/v1": {
     "post": {
       "body": {

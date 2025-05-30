@@ -397,6 +397,7 @@
     'Set-FalconContentPrecedence'
 
     # policy-device-control
+    'Edit-FalconDeviceControlClass'
     'Edit-FalconDeviceControlPolicy'
     'Get-FalconDeviceControlPolicy'
     'Get-FalconDeviceControlPolicyMember'
