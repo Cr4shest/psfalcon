@@ -73,20 +73,17 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
             }
           }
         } elseif ($String -eq 'HostGroup') {
-          if ($Config.group_type -match '^static') {
+          if ($Config.group_type -contains 'staticByID') {
             Write-Host '[Export-FalconConfig] Collecting list of hosts to match "HostGroup" members...'
             try {
               [System.Collections.Generic.List[object]]$HostList = Get-FalconHost -Detailed -All -Field device_id,
                 platform_name,hostname
               if ($HostList) {
-                foreach ($i in @($Config).Where({$_.group_type -match '^static'})) {
-                  # Split 'assignment_rule' into list of hostname or device_id values
+                foreach ($i in @($Config).Where({$_.group_type -eq 'staticByID'})) {
+                  # Split 'assignment_rule' into list of device_id values
                   $RuleList = @($i.assignment_rule -split '(device_id:|hostname:)').Where({
                     $_ -match '\[.+\]'}) -replace "^\[|'|\],?$" -split ','
-                  $Member = if ($RuleList -and $i.group_type -eq 'static') {
-                    # Match 'members' by hostname
-                    @($HostList).Where({$RuleList -contains $_.hostname})
-                  } elseif ($Rulelist -and $i.group_type -eq 'staticByID') {
+                  $Member = if ($RuleList) {
                     # Match 'members' by device_id
                     @($HostList).Where({$RuleList -contains $_.device_id})
                   }
@@ -1176,16 +1173,16 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             # Add DeviceControlPolicy exceptions under class in Modify list when not present in target CID
             foreach ($i in $Modify) {
               foreach ($c in $i.settings.classes) {
-                [System.Collections.Generic.List[PSCustomObject]]$c.exceptions = @()
+                  [System.Collections.Generic.List[PSCustomObject]]$c.exceptions = @()
                 foreach ($e in @($p.Value.ExImp).Where({$_.policy_id -eq $i.id -and $_.class -eq $c.id})) {
-                  $Filter = Write-SelectFilter $e DeviceControlException
-                  if ($Filter) {
-                    if (!($p.Value.ExCid | Where-Object -FilterScript $Filter)) {
+                    $Filter = Write-SelectFilter $e DeviceControlException
+                    if ($Filter) {
+                      if (!($p.Value.ExCid | Where-Object -FilterScript $Filter)) {
                       # Exclude 'id' and 'policy_id' from exception when adding to class
-                      $c.exceptions.Add(($e | Select-Object @($e.PSObject.Properties.Name).Where({
+                        $c.exceptions.Add(($e | Select-Object @($e.PSObject.Properties.Name).Where({
                         $_ -notmatch '^(id|policy_id)$'})))
-                    } else {
-                      # Capture result for ignored DeviceControlPolicy exceptions
+                      } else {
+                        # Capture result for ignored DeviceControlPolicy exceptions
                       Add-Result Ignored $i $p.Key ($c.id,'exceptions' -join '.') -Comment ($e.match_method,((
                         @(Select-ObjectName $e DeviceControlException).foreach{ $e.$_ }) -join '_') -join ':')
                     }
