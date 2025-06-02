@@ -344,7 +344,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 if ($Result) {
                   # Capture result
                   Add-Result Modified $New $Item $i.Name $Old.settings.($i.Name) $i.Value
-                } else {
+            } else {
                   # Output modified property by name
                   $i.Name
                 }
@@ -369,10 +369,10 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                   # Check existing class under DeviceControlPolicy in target CID to compare 'action' value
                   $CompC = $Old.settings.($i.Name).Where({$_.id -eq $c.id})
                   if ($CompC -and $c.action -ne $CompC.action) {
-                    if ($Result) {
+                  if ($Result) {
                       # Capture result for modified 'action'
                       Add-Result Modified $New $Item ($c.id,'action' -join '.') $CompC.action $c.action
-                    } else {
+                  } else {
                       # Output 'class.id' for modification
                       $c.id
                     }
@@ -391,22 +391,22 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         if ($Result) {
           @($PropList).foreach{
             # Capture result
-            if ($Ref.$_ -ne $Obj.$_) { Add-Result Modified $Obj $Item $_ $Ref.settings.$_ $Obj.settings.$_ }
+            if ($Old.$_ -ne $New.$_) { Add-Result Modified $New $Item $_ $Old.settings.$_ $New.settings.$_ }
           }
         } else {
           [boolean[]]$Edit = @($PropList).foreach{
             if ($_ -eq 'rule_group_ids') {
-              foreach ($i in $Obj.settings.rule_group_ids) {
+              foreach ($i in $New.settings.rule_group_ids) {
                 # Check for new 'rule_group_ids'
-                if ($Ref.settings.rule_group_ids -notcontains $i) { $true } else { $false }
+                if ($Old.settings.rule_group_ids -notcontains $i) { $true } else { $false }
               }
             } else {
               # Compare each property
-              if ($Ref.$_ -ne $Obj.$_) { $true } else { $false }
+              if ($Old.$_ -ne $New.$_) { $true } else { $false }
             }
           }
           # Output entire 'settings' object if there are differences
-          if ($Edit -eq $true) { $Obj.settings }
+          if ($Edit -eq $true) { $New.settings }
         }
       } elseif ($Item -eq 'SensorUpdatePolicy') {
         [string[]]$Select = if ($Old) {
@@ -531,7 +531,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
           'FirewallRule' {
             'id','family','name','enabled','deleted','direction','action','address_family','protocol',
-              'fqdn_enabled','fqdn','version','description','rule_group','fields','icmp','local_address',
+            'fqdn_enabled','fqdn','version','description','rule_group','fields','icmp','local_address',
               'local_port','monitor','remote_address','remote_port'
           }
           'HostGroup' {
@@ -549,11 +549,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
           'Ioc' {
             'id','type','value','platforms','severity','deleted','expiration','action','mobile_action','tags',
-              'applied_globally','host_groups'
+            'applied_globally','host_groups'
           }
           'Script' {
             'id','name','platform','content','sha256','permission_type','write_access','share_with_workflow',
-              'workflow_is_disruptive'
+            'workflow_is_disruptive'
           }
         }
         if ($PropList) {
@@ -753,6 +753,29 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           #}
           # Output items with properties to be modified and remove from Modify list
           #if ($m.Count -gt 1) { $Item | Select-Object $m }
+        } elseif ($Ref -and $Item -eq 'HostGroup') {
+          # Modify HostGroup
+          [string[]]$PropList = @($Obj.PSObject.Properties.Name).Where({
+            $_ -notmatch '^(id|group_type|name)$'}).foreach{ if ($Obj.$_ -ne $Ref.$_) { $_ } }
+          if ($PropList) {
+            if ($Obj.id -ne $Ref.id) {
+              # Update identifier
+              Set-Property $Obj id $Ref.id
+              Write-Log 'Edit-Item' ('HostGroup',([PSCustomObject]@{old=$Obj.id;new=$Ref.id} | Format-List |
+                Out-String).Trim() -join "`n")
+            }
+            $Req = $Obj | & "Edit-Falcon$Item" @Param
+            if ($Req) {
+              # Capture individual modified property results
+              @($PropList).foreach{ Add-Result Modified $Req HostGroup $_ $Ref.$_ $Req.$_ }
+            } elseif ($Fail) {
+              # Capture failure to modify HostGroup
+              Add-Result Failed $Obj HostGroup -Comment $Fail.exception.message -Log 'to modify'
+            }
+          } else {
+            # Add ignored result
+            Add-Result Ignored $Obj HostGroup -Comment Identical
+          }
         } elseif ($Ref -and $Item -eq 'IoaGroup') {
           foreach ($r in @($Obj.rules).Where({$_.deleted -eq $false})) {
             # Check for matching rule in target environment, excluding deleted IoaRule
@@ -1171,9 +1194,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               }
             }
           }
-          # Capture list of items to be modified
-          $p.Value['Modify'] = $Modify
         }
+        # Capture lists of items to be created and modified
+        $p.Value['Modify'] = $Modify
         $p.Value['Import'] = $Import
       }
     }
@@ -1193,7 +1216,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     }
     function Get-DcException ([PSCustomObject[]]$Obj) {
       foreach ($i in $Obj) {
-        # Generate list of exceptions from a DeviceControlPolicy
+          # Generate list of exceptions from a DeviceControlPolicy
         @($i.settings.classes.exceptions).foreach{
           [PSCustomObject]$_ | Select-Object @{l='policy_id';e={$i.id}},id,class,vendor_id,vendor_id_decimal,
           vendor_name,product_id,product_id_decimal,product_name,serial_number,combined_id,action,match_method,
@@ -1382,17 +1405,24 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         if ($Item -eq 'HostGroup') {
           # Create HostGroup
           for ($i=0; $i -lt $Config.$Item.Import.Count; $i+=10) {
-            [PSCustomObject[]]$g = @($Config.$Item.Import)[$i..($i+9)]
-            $Req = $g | New-FalconHostGroup @Param
+            [PSCustomObject[]]$Group = @($Config.$Item.Import)[$i..($i+9)]
+            $Req = $Group | New-FalconHostGroup @Param
             if ($Req) {
               @($Req).foreach{
-                # Update identifier reference, capture result
+                # Update identifier reference, capture result and add to 'Cid' list for modification reference
                 Set-IdRef $_ $Item -Update
                 Add-Result Created $_ $Item
+                $Config.$Item.Cid.Add($_)
+              }
+              foreach ($g in $Group) {
+                if (@($Req).Where({$_.name -eq $g.name -and $_.type -eq $g.type})) {
+                  # Add created HostGroup to 'Modify' list for 'assignment_rule' updates
+                  $Config.$Item.Modify.Add($g)
+                }
               }
             } elseif ($Fail) {
               # Capture failure result
-              @($g).foreach{ Add-Result Failed $_ $Item -Comment $Fail.exception.message -Log 'to create' }
+              @($Group).foreach{ Add-Result Failed $_ $Item -Comment $Fail.exception.message -Log 'to create' }
             }
           }
         } elseif ($Item -eq 'FileVantageRuleGroup') {
