@@ -43,8 +43,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlClass
   }
   process {
     if ($InputObject) {
-      # Filter to defined 'policies' properties
-      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.policies)) }
+      @($InputObject).foreach{
+        # Filter to defined 'policies' properties and remove empty values
+        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.policies
+        Remove-EmptyValue $i
+        $List.Add($i)
+      }
     } else {
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
@@ -138,8 +142,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlPolicy
   }
   process {
     if ($InputObject) {
-      # Filter to defined 'policies' properties
       @($InputObject).foreach{
+        # Filter to defined 'policies' properties and remove empty values
         $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.policies
         Remove-EmptyValue $i
         $List.Add($i)
