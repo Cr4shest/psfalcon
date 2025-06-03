@@ -139,7 +139,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlPolicy
   process {
     if ($InputObject) {
       # Filter to defined 'policies' properties
-      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.policies)) }
+      @($InputObject).foreach{
+        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.policies
+        Remove-EmptyValue $i
+        $List.Add($i)
+      }
     } else {
       if ($PSCmdlet.ParameterSetName -match 'default-device-control') {
         $PSBoundParameters['custom_notifications'] = @{}
