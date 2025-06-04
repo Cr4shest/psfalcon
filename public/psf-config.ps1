@@ -670,9 +670,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           }
           'FirewallRule' {
             'id','family','name','enabled','deleted','direction','action','address_family','protocol',
-            'fqdn_enabled','fqdn','version','description','rule_group','fields','icmp','local_address',
-            'local_port','monitor','remote_address','remote_port',@{l='rule_group';e={
-            Select-PropList rule_group id,name,platform}}
+            'fqdn_enabled','fqdn','version','description','fields','icmp','local_address','local_port','monitor',
+            'remote_address','remote_port',@{l='rule_group';e={Select-PropList rule_group id,name,platform}}
           }
           'HostGroup' {
             'id','group_type','name','assignment_rule','description'
@@ -1574,7 +1573,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               if ($Rule) {
                 @($Rule).foreach{
                   # Update identifier for FirewallRule, capture result
-                  $_.rule_group.id = $i.id
+                  if ($_.rule_group -and $_.rule_group.id) { $_.rule_group.id = $i.id }
                   Add-Result Created $_ FirewallRule
                 }
               }
