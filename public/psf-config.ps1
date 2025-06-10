@@ -1303,40 +1303,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         $p.Value['Modify'] = $Modify
       }
     }
-    function Get-CurrentBuild {
-      param(
-        [string]$String,
-        [string]$Platform
-      )
-      if ($String -match '\|') {
-        # Match by sensor build tag, replacing suffix with wildcard for cloud disparities
-        if ($String -match '^n\|tagged\|\d{1,}$') { $String = $String -replace '\d{1,}$','*' }
-        @($Config.SensorUpdatePolicy.Build).Where({$_.platform -eq $Platform -and $_.build -like "*|$String"}) |
-          Select-Object build,sensor_version
-      } elseif ($String) {
-        # Check for exact sensor build version match
-        @($Config.SensorUpdatePolicy.Build).Where({$_.platform -eq $Platform -and $_.build -eq $String}) |
-          Select-Object build,sensor_version,stage
-      } else {
-        $null
-      }
-    }
-    function Get-DcClass {
-      param(
-        [PSCustomObject[]]$Obj
-      )
-      # Generate list of classes from a DeviceControlPolicy
-      foreach ($i in ($Obj | Select-Object id,bluetooth_settings,@{l='usb_settings';e={if ($_.settings) {
-      $_.settings } else { $_.usb_settings }}})) {
-        foreach ($t in @('usb_settings','bluetooth_settings')) {
-          @($i.$t.classes).foreach{
-            [PSCustomObject]$_ | Select-Object @{l='policy_id';e={$i.id}},@{l='type';e={$t}},id,action,
-            @{l='class';e={if ($_.class) { $_.class } else { $_.id }}},@{l='minor_classes';e={$_.minor_classes |
-            Select-Object id,minor_class,action}}
-          }
-        }
-      }
-    }
     function Get-DcException {
       param(
         [PSCustomObject[]]$Obj
@@ -1919,6 +1885,20 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       }
     }
     function Update-SuPolicy {
+      function Get-CurrentBuild ([string]$String,[string]$Platform) {
+        if ($String -match '\|') {
+          # Match by sensor build tag, replacing suffix with wildcard for cloud disparities
+          if ($String -match '^n\|tagged\|\d{1,}$') { $String = $String -replace '\d{1,}$','*' }
+          @($Config.SensorUpdatePolicy.Build).Where({$_.platform -eq $Platform -and $_.build -like "*|$String"}) |
+            Select-Object build,sensor_version
+        } elseif ($String) {
+          # Check for exact sensor build version match
+          @($Config.SensorUpdatePolicy.Build).Where({$_.platform -eq $Platform -and $_.build -eq $String}) |
+            Select-Object build,sensor_version,stage
+        } else {
+          $null
+        }
+      }
       # Default timezone for use with 'scheduler'
       [string]$DefaultTz = 'Etc/Universal'
       foreach ($i in $Config.SensorUpdatePolicy.Import) {
