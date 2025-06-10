@@ -714,11 +714,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         'PreventionPolicy' {
           'cid','id','name','platform_name','description','enabled',@{l='ioa_rule_groups';
           e={$_.ioa_rule_groups | Select-Object id,name}},@{l='groups';e={$_.groups | Select-Object id,name}},
-          @{l='settings';e={,($_.prevention_settings.settings | Select-Object id,value)}}
+          @{l='settings';e={$_.prevention_settings.settings | Select-Object id,value}}
         }
         'ResponsePolicy' {
           'cid','id','name','platform_name','description','enabled',@{l='groups';e={$_.groups |
-          Select-Object id,name}},@{l='settings';e={,($_.settings.settings | Select-Object id,value)}}
+          Select-Object id,name}},@{l='settings';e={$_.settings.settings | Select-Object id,value}}
         }
         'Script' {
           'id','name','platform','content','sha256','permission_type','write_access','share_with_workflow',
@@ -1105,7 +1105,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               Add-Result Failed $Obj $Item -Comment $Fail.exception.message -Log 'to modify'
             }
           }
-          
         } elseif ($Item -eq 'FileVantagePolicy') {
           if ($Obj.exclusions) {
             foreach ($e in $Obj.exclusions) {
@@ -1206,6 +1205,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             $Edit = Compare-Setting $Obj $Ref $Item
             if ($Edit) {
               # Modify Policy and capture result
+              if ($Obj.id -ne $Ref.id) { Update-Id $Obj $Ref $Item }
               $Req = & "Edit-Falcon$Item" -Id $Obj.id -Setting $Edit @Param
               if ($Req) {
                 # Capture each modified property
@@ -1219,7 +1219,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         }
         if ($Obj.id -ne $Ref.id) {
           # Update policy identifier for modifying 'groups' and 'enabled'
-          Set-Property $Obj id $Ref.id
+          Update-Id $Obj $Ref $Item
         }
         if ($Item -eq 'PreventionPolicy') {
           if ($Obj.ioa_rule_groups) {
@@ -2170,7 +2170,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     foreach ($p in $Config.GetEnumerator().Where({$_.Key -match 'Policy$' -and $_.Value.Import})) {
       Write-Host "[Import-FalconConfig] Creating $($p.Key)..."
       for ($i=0;$i -lt $p.Value.Import.Count;$i+=100) {
-        [PSCustomObject[]]$g = @($p.Value.Import)[$i..($i+99)]
+        [PSCustomObject[]]$g = @($p.Value.Import | Select-Object name,platform_name,description)[$i..($i+99)]
         @($g | & "New-Falcon$($p.Key)" -EA 0 -EV Fail).foreach{
           # Update identifier reference, capture result, add to CID list for comparison during modification step
           Set-IdRef $_ $p.Key -Update
