@@ -752,9 +752,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         # Add dependent values to Select for evaluation (not creation/modification)
         if ($UserDict.AssignExisting) {
           # When AssignExisting is present
-          if ($UserDict.Select -match '^(Ioa|Ml|Sv)Exclusion$|Policy$' -and $UserDict.Select -notcontains
+          if ($UserDict.Select -match '^(Ioa|Ml|Sv)Exclusion$|Ioc$|Policy$' -and $UserDict.Select -notcontains
           'HostGroup') {
-            # HostGroup when importing exclusions or policy
+            # HostGroup when importing Exclusion, Ioc, or Policy
             $UserDict.Select += 'HostGroup'
           }
           if ($UserDict.Select -contains 'PreventionPolicy' -and $UserDict.Select -notcontains 'IoaGroup') {
@@ -2115,21 +2115,25 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         New-Group $p.Key $UaComment
       } elseif ($p.Key -eq 'Ioc') {
         # Create Ioc
+        @($p.Value.Import).Where({$_.applied_globally -eq $false -and $_.host_groups}).foreach{
+          # Update 'host_groups' identifiers
+          [string[]]$_.host_groups = Update-GroupId $_.host_groups $p.Key host_groups
+          if (!$_.host_groups) {
+            # Capture ignored result and remove from list to create
+            Add-Result Ignored $_ $p.Key -Comment 'Unable to match Host Group(s)'
+            [void]$p.Value.Import.Remove($_)
+          }
+        }
         do {
-          
-          ## Update host groups for IOCs, add IOCs that aren't "global" and don't have groups to "failed" result
-
           foreach ($i in ($p.Value.Import | New-FalconIoc -EA 0 -EV Fail)) {
             if ($i.message_type -and $i.message) {
               # Add individual failure to output
               Add-Result Failed $i $p.Key -Log 'to create' -Comment ($i.message_type,$i.message -join ': ')
             } elseif ($i.type -and $i.value) {
-              # Update identifier reference, capture result
+              # Capture result and remove individual Ioc from remaining import list
               Add-Result Created $i $p.Key
-              Set-IdRef $i $p.Key -Update
+              $p.Value.Import = @($p.Value.Import).Where({$_.type -ne $i.type -and $_.value -ne $i.value})
             }
-            # Remove individual Ioc from Import
-            $p.Value.Import = @($p.Value.Import).Where({$_.type -ne $i.type -and $_.value -ne $i.value})
           }
           if ($Fail) {
             @($p.Value.Import).foreach{
