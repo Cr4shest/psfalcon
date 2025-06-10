@@ -390,32 +390,45 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
                 # Add 'minor_classes' that require changes
                 if ($McList) { $c.minor_classes = $McList }
               }
-              if (!$Result) { Set-Property $c exceptions ([System.Collections.Generic.List[PSCustomObject]]@()) }
-              foreach ($e in @($Config.$Item.ExImp).Where({$_.policy_id -eq $New.id -and $_.type -eq $t -and
-              $_.class -eq $c.class})) {
-                $Filter = Write-SelectFilter $e DeviceControlException
-                if ($Filter) {
-                  # Compare new exceptions against existing exceptions in target DeviceControlPolicy
-                  $RefE = $RefC.exceptions | Where-Object -FilterScript $Filter
-                  $eObj = [PSCustomObject]$e | Select-Object @($e.PSObject.Properties.Name).Where({
-                    $_ -notmatch '^(id|policy_id|type)$'})
-                  $eName = ($eObj.match_method,((@(Select-ObjectName $eObj DeviceControlException).foreach{
-                    $eObj.$_ }) -join '_') -join ':')
-                  if (!$RefE) {
-                    if ($Result) {
+              if ($Result) {
+                foreach ($e in $c.exceptions) {
+                  # Compare exclusions to find new or modified results
+                  $Filter = Write-SelectFilter $e DeviceControlException
+                  if ($Filter) {
+                    # Compare new exceptions against existing exceptions in target DeviceControlPolicy
+                    $RefE = $RefC.exceptions | Where-Object -FilterScript $Filter
+                    $eObj = [PSCustomObject]$e | Select-Object @($e.PSObject.Properties.Name).Where({
+                      $_ -notmatch '^(id|policy_id|type)$'})
+                    $eName = ($eObj.match_method,((@(Select-ObjectName $eObj DeviceControlException).foreach{
+                      $eObj.$_ }) -join '_') -join ':')
+                    if (!$RefE) {
                       # Capture new exception results
                       Add-Result Created $New $Item ($c.class,'exceptions' -join '.') -New $eName
-                    } else {
-                      # Capture missing exceptions for modification
-                      $c.exceptions.Add($eObj)
-                    }
-                  } elseif ($RefE -and $RefE.action -ne $e.action) {
-                    # Use existing exception 'id' for modification of 'action'
-                    Set-Property $eObj id $RefE.id
-                    if ($Result) {
+                    } elseif ($RefE -and $e.action -ne $RefE.action) {
+                      # Capture modified 'action' result
                       Add-Result Modified $New $Item ($c.class,'exceptions','action' -join '.') $RefE.action (
                         $eObj.action) -Comment $eName
-                    } else {
+                    }
+                  }
+                }
+              } else {
+                Set-Property $c exceptions ([System.Collections.Generic.List[PSCustomObject]]@())
+                foreach ($e in @($Config.$Item.ExImp).Where({$_.policy_id -eq $New.id -and $_.type -eq $t -and
+                $_.class -eq $c.class})) {
+                  $Filter = Write-SelectFilter $e DeviceControlException
+                  if ($Filter) {
+                    # Compare new exceptions against existing exceptions in target DeviceControlPolicy
+                    $RefE = $RefC.exceptions | Where-Object -FilterScript $Filter
+                    $eObj = [PSCustomObject]$e | Select-Object @($e.PSObject.Properties.Name).Where({
+                      $_ -notmatch '^(id|policy_id|type)$'})
+                    $eName = ($eObj.match_method,((@(Select-ObjectName $eObj DeviceControlException).foreach{
+                      $eObj.$_ }) -join '_') -join ':')
+                    if (!$RefE) {
+                      # Capture missing exceptions for modification
+                      $c.exceptions.Add($eObj)
+                    } elseif ($RefE -and $RefE.action -ne $e.action) {
+                      # Use existing exception 'id' for modification of 'action'
+                      Set-Property $eObj id $RefE.id
                       $c.exceptions.Add($eObj)
                     }
                   }
