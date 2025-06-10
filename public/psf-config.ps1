@@ -2047,8 +2047,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     # Update input to coincide with Select values
     Confirm-InputValue $UserDict
     if (!$ArchivePath) { throw "Failed to resolve '$($PSBoundParameters.Path)'." }
+    # Attempt to retrieve CID using 'Get-FalconCcid' for evaluation
     [string]$HomeCid = try {
-      # Attempt to retrieve CID using 'Get-FalconCcid' for evaluation
       Confirm-CidValue (Get-FalconCcid -EA 0)
     } catch {
       throw "Failed to retrieve target CID value. Verify 'Sensor Download: Read' permission."
