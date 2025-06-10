@@ -2215,22 +2215,20 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
   end {
     if ($Config.Values.Result) {
       # Select 'policy created' and FileVantagePolicy 'modified rule_groups' results
-      [PSCustomObject[]]$Warn = @($Config.Values.Result).Where({($_.type -match 'Policy$' -and $_.action -eq
-        'Created') -or ($_.type -match '^(FileVantage|Firewall)Policy$' -and $_.action -eq 'Modified' -and
-        $_.property -match '^rule_group(_id)?s$' -and $_.old_value)})
-      foreach ($Platform in ($Warn.platform | Select-Object -Unique)) {
-        foreach ($i in @($Warn).Where({$_.platform -eq $Platform})) {
-          if ($i.action -eq 'Created' -and @($Config.($i.type).Cid).Where({$_.platform_name -eq $i.platform -and
-          $_.name -notmatch $PolicyDefault})) {
-            # Output precedence warning for existing policies for each 'platform'
-            $PSCmdlet.WriteWarning(
-              ('[Import-FalconConfig] Existing {0} {1} were found. Verify precedence!' -f $i.platform,$i.type))
-          } elseif ($i.action -eq 'Modified') {
-            # Output precedence when rule groups are assigned to policies with existing rule groups
-            $PSCmdlet.WriteWarning(
-              ('[Import-FalconConfig] {0} {1} "{2}" had existing "{3}". Verify precedence!' -f $i.platform,
-                $i.type,$i.name,$i.property))
-          }
+      foreach ($i in (@($Config.Values.Result).Where({($_.type -match 'Policy$' -and $_.action -eq
+      'Created') -or ($_.type -match '^(FileVantage|Firewall)Policy$' -and $_.action -eq 'Modified' -and
+      $_.property -match '^rule_group(_id)?s$' -and $_.old_value)}) | Select-Object -Property action,type,
+      platform,name -Unique)) {
+        if ($i.action -eq 'Created' -and @($Config.($i.type).Cid).Where({$_.platform_name -eq $i.platform -and
+        $_.name -notmatch $PolicyDefault -and !$i.property})) {
+          # Output precedence warning for existing policies for each 'platform'
+          $PSCmdlet.WriteWarning(
+            ('[Import-FalconConfig] Existing {0} {1} were found. Verify precedence!' -f $i.platform,$i.type))
+        } elseif ($i.action -eq 'Modified' -and $i.property) {
+          # Output precedence when rule groups are assigned to policies with existing rule groups
+          $PSCmdlet.WriteWarning(
+            ('[Import-FalconConfig] {0} {1} "{2}" had existing "{3}". Verify precedence!' -f $i.platform,
+              $i.type,$i.name,$i.property))
         }
       }
     }
