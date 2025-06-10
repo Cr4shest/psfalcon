@@ -2033,15 +2033,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     [string]$UaComment = ((Show-FalconModule).UserAgent,'Import-FalconConfig' -join ': ')
   }
   process {
+    # Capture valid values for ModifyDefault and ModifyExisting
     $UserDict = @{}
     @('Default','Existing').foreach{
-      # Capture valid values for ModifyDefault and ModifyExisting
       $UserDict["Valid$_"] = @(
         (Get-Command Import-FalconConfig).Parameters."Modify$_".Attributes.ValidValues
       ).Where({$_ -ne 'All'})
     }
+    # Capture user input for AssignExisting, ModifyDefault, ModifyExisting, and Select
     $PSBoundParameters.GetEnumerator().Where({!$_.Key.Equals('Path') -and $_.Value}).foreach{
-      # Capture user input for AssignExisting, ModifyDefault, ModifyExisting, and Select
       $UserDict[$_.Key] = $_.Value
     }
     # Update input to coincide with Select values
