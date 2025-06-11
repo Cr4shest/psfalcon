@@ -5014,6 +5014,13 @@
       ]
     }
   },
+  "/real-time-response/entities/put-file-contents/v1": {
+    "get": {
+      "query": [
+        "id"
+      ]
+    }
+  },
   "/real-time-response/entities/queued-sessions/command/v1": {
     "delete": {
       "query": [

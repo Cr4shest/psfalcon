@@ -534,6 +534,7 @@
     'Invoke-FalconCommand'
     'Invoke-FalconResponderCommand'
     'Receive-FalconGetFile'
+    'Receive-FalconPutFile'
     'Remove-FalconCommand'
     'Remove-FalconGetFile'
     'Remove-FalconPutFile'
