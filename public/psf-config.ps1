@@ -16,9 +16,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
   [CmdletBinding(DefaultParameterSetName='ExportItem',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='ExportItem',Position=1)]
-    [ValidateSet('ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup','FirewallGroup',
-      'FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion','PreventionPolicy',
-      'ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
+      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
+      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [Alias('Items')]
     [string[]]$Select,
     [Parameter(ParameterSetName='ExportItem')]
