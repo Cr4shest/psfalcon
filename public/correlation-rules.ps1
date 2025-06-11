@@ -17,18 +17,24 @@ MITRE ATT&CK technique identifier
 .PARAMETER Severity
 Correlation rule severity
 .PARAMETER Search
-Search properties ('filter', 'lookback', 'outcome', 'trigger_mode')
+Search properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
 .PARAMETER Operation
 Operation properties ('schedule', 'start_on', 'stop_on')
 .PARAMETER Status
 Correlation rule status
+.PARAMETER Status
+Correlation rule state
+.PARAMETER Notification
+Notification properties ('config', 'options', 'type')
+.PARAMETER Comment
+Audit log comment
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
 #>
   [CmdletBinding(DefaultParameterSetName='/correlation-rules/entities/rules/v1:patch',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',Mandatory,
-      ValueFromPipelineByPropertyName,ValueFromPipeline,Position=1)]
+      ValueFromPipelineByPropertyName,Position=1)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [string]$Id,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
@@ -39,11 +45,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
     [string]$Description,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=4)]
-    [ValidatePattern('^TA\d{4}$')]
+    [Alias('tactic_id')]
     [string]$Tactic,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=5)]
-    [ValidatePattern('^T\d{4}$')]
+    [Alias('technique_id')]
     [string]$Technique,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=6)]
@@ -58,22 +64,33 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=9)]
     [ValidateSet('active','inactive',IgnoreCase=$false)]
-    [string]$Status
+    [string]$Status,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=10)]
+    [ValidateSet('published','unpublished',IgnoreCase=$false)]
+    [string]$State,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=11)]
+    [Alias('notifications')]
+    [object]$Notification,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
+      Position=12)]
+    [string]$Comment
   )
   begin {
-    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
-    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-  }
-  process {
-    @('search','operation').foreach{
-      if ($PSBoundParameters.$_) {
-        # Add 'search' and 'operation' to 'root' list in Format
-        [void]$Param.Format.Body.Remove($_)
-        $Param.Format.Body.root += $_
+    $Param = @{
+      Command = $MyInvocation.MyCommand.Name
+      Endpoint = $PSCmdlet.ParameterSetName
+      Format = @{
+        Body = @{
+          root = @('comment','description','id','name','notifications','operation','search','severity','state',
+            'status')
+          mitre_attack = @('tactic_id','technique_id')
+        }
       }
     }
-    Invoke-Falcon @Param -UserInput $PSBoundParameters
   }
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
 }
 function Get-FalconCorrelationRule {
 <#
@@ -169,11 +186,15 @@ MITRE ATT&CK technique identifier
 .PARAMETER Severity
 Correlation rule severity
 .PARAMETER Search
-Search properties ('filter', 'lookback', 'outcome', 'trigger_mode')
+Search properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
 .PARAMETER Operation
 Operation properties ('schedule', 'start_on', 'stop_on')
 .PARAMETER Status
 Correlation rule status
+.PARAMETER TemplateId
+Correlation rule template identifier
+.PARAMETER Notification
+Notification properties ('config', 'options', 'type')
 .PARAMETER TriggerOnCreate
 Trigger correlation rule upon creation
 .PARAMETER Comment
@@ -196,11 +217,11 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
     [string]$Cid,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
       Position=4)]
-    [ValidatePattern('^TA\d{4}$')]
+    [Alias('tactic_id')]
     [string]$Tactic,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
       Position=5)]
-    [ValidatePattern('^T\d{4}$')]
+    [Alias('technique_id')]
     [string]$Technique,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
       ValueFromPipelineByPropertyName,Position=6)]
@@ -216,25 +237,35 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
       ValueFromPipelineByPropertyName,Position=9)]
     [ValidateSet('active','inactive',IgnoreCase=$false)]
     [string]$Status,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=10)]
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=10)]
+    [Alias('template_id')]
+    [string]$TemplateId,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
+      Position=11)]
+    [Alias('notifications')]
+    [object]$Notification,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=12)]
     [Alias('trigger_on_create')]
     [boolean]$TriggerOnCreate,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=11)]
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=13)]
     [string]$Comment
   )
   begin {
-    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
-    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
+    $Param = @{
+      Command = $MyInvocation.MyCommand.Name
+      Endpoint = $PSCmdlet.ParameterSetName
+      Format = @{
+        Body = @{
+          root = @('comment','customer_id','description','name','notifications','operation','search','severity',
+            'status','template_id','trigger_on_create')
+          mitre_attack = @('tactic_id','technique_id')
+        }
+      }
+    }
   }
   process {
     if ($PSBoundParameters.Cid) { $PSBoundParameters.Cid = Confirm-CidValue $PSBoundParameters.Cid }
-    @('search','operation').foreach{
-      if ($PSBoundParameters.$_) {
-        # Add 'search' and 'operation' to 'root' list in Format
-        [void]$Param.Format.Body.Remove($_)
-        $Param.Format.Body.root += $_
-      }
-    }
     Invoke-Falcon @Param -UserInput $PSBoundParameters
   }
 }

@@ -1100,7 +1100,7 @@
       ]
     }
   },
-  "/correlation-rules/combined/rules/v1": {
+  "/correlation-rules/combined/rules/v2": {
     "get": {
       "query": [
         "filter",
@@ -1116,64 +1116,16 @@
       "query": [
         "ids"
       ]
-    },
+    }
+  },
+  "/correlation-rules/entities/rules/v2": {
     "get": {
       "query": [
         "ids"
       ]
-    },
-    "patch": {
-      "body": {
-        "root": [
-          "description",
-          "id",
-          "name",
-          "severity",
-          "status",
-          "tactic",
-          "technique"
-        ],
-        "operation": [
-          "schedule",
-          "start_on",
-          "stop_on"
-        ],
-        "search": [
-          "filter",
-          "lookback",
-          "outcome",
-          "trigger_mode"
-        ]
-      }
-    },
-    "post": {
-      "body": {
-        "root": [
-          "comment",
-          "customer_id",
-          "description",
-          "name",
-          "severity",
-          "status",
-          "tactic",
-          "technique",
-          "trigger_on_create"
-        ],
-        "operation": [
-          "schedule",
-          "start_on",
-          "stop_on"
-        ],
-        "search": [
-          "filter",
-          "lookback",
-          "outcome",
-          "trigger_mode"
-        ]
-      }
     }
   },
-  "/correlation-rules/queries/rules/v1": {
+  "/correlation-rules/queries/rules/v2": {
     "get": {
       "query": [
         "filter",
