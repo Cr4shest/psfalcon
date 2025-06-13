@@ -1125,6 +1125,13 @@
       ]
     }
   },
+  "/correlation-rules/entities/rule-versions/v1": {
+    "delete": {
+      "query": [
+        "ids"
+      ]
+    }
+  },
   "/correlation-rules/entities/rules/v2": {
     "get": {
       "query": [

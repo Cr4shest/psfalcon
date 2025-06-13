@@ -5,7 +5,7 @@ Modify Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Write'.
 .PARAMETER Id
-Correlation rule identifier
+Correlation rule 'id'
 .PARAMETER Name
 Correlation rule name
 .PARAMETER Description
@@ -99,7 +99,7 @@ Search for Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Read'.
 .PARAMETER Id
-Correlation rule identifier
+Correlation rule 'id' (for a specific rule version)
 .PARAMETER RuleId
 Correlation 'rule_id' (for latest version only)
 .PARAMETER Filter
@@ -295,26 +295,37 @@ Remove Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Write'.
 .PARAMETER Id
-Correlation rule identifier
+Correlation rule 'id' (to remove a specific version)
+.PARAMETER RuleId
+Correlation 'rule_id' (to remove all versions)
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconCorrelationRule
 #>
   [CmdletBinding(DefaultParameterSetName='/correlation-rules/entities/rules/v1:delete',SupportsShouldProcess)]
   param(
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:delete',Mandatory,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rule-versions/v1:delete',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline,Position=1)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
-    [string[]]$Id
+    [string[]]$Id,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:delete',Mandatory)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [string[]]$RuleId
   )
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
     [System.Collections.Generic.List[string]]$List = @()
   }
-  process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
+  process {
+    if ($Id) {
+      @($Id).foreach{ $List.Add($_) }
+    } elseif ($RuleId) {
+      @($RuleId).foreach{ $List.Add($_) }
+    }
+  }
   end {
     if ($List) {
-      $PSBoundParameters['Id'] = @($List)
+      $PSBoundParameters['ids'] = @($List)
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
