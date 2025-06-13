@@ -597,8 +597,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           Select-Object id,name}},'settings'
         }
         'CorrelationRule' {
-          @{l='cid';e={$_.customer_id}},'id','name','description','mitre_attack','severity','search','operation',
-          'status','template_id','rule_id','state','version'
+          @{l='cid';e={$_.customer_id}},'id','name','description','mitre_attack','notifications','severity',
+          'search','operation','rule_id','state','status','template_id','version'
         }
         'DeviceControlPolicy' {
           'cid','id','name','platform_name','description','enabled',
