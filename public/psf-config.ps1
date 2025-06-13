@@ -50,6 +50,10 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
           # Create policy exports in 'platform_name' order to retain precedence
           & "Get-Falcon$String" -Filter "platform_name:'$_'" -Detailed -All 2>$null
         }
+      } elseif ($String -eq 'CorrelationRule') {
+        # Only export latest CorrelationRule
+        [string[]]$RuleId = (& "Get-Falcon$String" -Detailed -All 2>$null).rule_id
+        if ($RuleId) { & "Get-Falcon$String" -RuleId $RuleId }
       } else {
         & "Get-Falcon$String" -Detailed -All 2>$null
       }
@@ -59,14 +63,13 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
           Write-Host '[Export-FalconConfig] Exporting "FirewallSetting"...'
           $Setting = Get-FalconFirewallSetting -Id $Config.id 2>$null
           foreach ($i in $Setting) {
-            ($Config | Where-Object { $_.id -eq $i.policy_id }).PSObject.Properties.Add((
-              New-Object PSNoteProperty('settings',$i)
-            ))
+            @($Config).Where({$_.id -eq $i.policy_id}).PSObject.Properties.Add((
+              New-Object PSNoteProperty('settings',$i)))
           }
         } elseif ($String -eq 'FileVantageRuleGroup') {
           # Update 'assigned_rules' with rule content inside FileVantage rule groups
           foreach ($i in $Config) {
-            $RuleId = $i.assigned_rules.id | Where-Object { ![string]::IsNullOrWhiteSpace($_) }
+            $RuleId = @($i.assigned_rules.id).Where({![string]::IsNullOrWhiteSpace($_)})
             if ($RuleId) {
               Write-Host ('[Export-FalconConfig] Exporting rules for {0} group "{1}"...' -f $i.type,$i.name)
               $i.assigned_rules = @(Get-FalconFileVantageRule -RuleGroupId $i.id -Id $RuleId)
@@ -171,18 +174,18 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       }
     })]
     [string]$Path,
-    [ValidateSet('ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup','FirewallGroup',
-      'FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion','PreventionPolicy',
-      'ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
+      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
+      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [string[]]$Select,
     [Alias('Force')]
     [switch]$AssignExisting,
     [ValidateSet('All','ContentPolicy','DeviceControlPolicy','PreventionPolicy','ResponsePolicy',
       'SensorUpdatePolicy')]
     [string[]]$ModifyDefault,
-    [ValidateSet('All','ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup',
-      'FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion',
-      'PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('All','ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
+      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
+      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [string[]]$ModifyExisting
   )
   begin {
@@ -593,6 +596,10 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
           'cid','id','name','platform_name','description','enabled',@{l='groups';e={$_.groups |
           Select-Object id,name}},'settings'
         }
+        'CorrelationRule' {
+          @{l='cid';e={$_.customer_id}},'id','name','description','mitre_attack','severity','search','operation',
+          'status','template_id','rule_id','state','version'
+        }
         'DeviceControlPolicy' {
           'cid','id','name','platform_name','description','enabled',
           @{
@@ -808,7 +815,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       if ($Obj) {
         $Param = @{ ErrorAction = 'SilentlyContinue'; ErrorVariable = 'Fail' }
         $Ref = $Config.$Item.Cid | Where-Object -FilterScript (Write-SelectFilter $Obj $Item)
-        if ($Ref -and $Item -eq 'FileVantageRuleGroup') {
+        if ($Ref -and $Item -eq 'CorrelationRule') {
+          ##
+        } elseif ($Ref -and $Item -eq 'FileVantageRuleGroup') {
           foreach ($Ar in $Obj.assigned_rules) {
             # Get matching rule from target CID
             $RefAr = $Ref.assigned_rules | Where-Object -FilterScript (Write-SelectFilter $Ar FileVantageRule)
@@ -1734,7 +1743,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             if ($Id -and !@($Config.$Item.Ref).Where({$_.old.Equals($Id)})) {
               # Create new identifier reference
               $Ref = [PSCustomObject]@{ old = $Id; new = '' }
-              @('name','os','type','value').foreach{
+              [string[]]$Field = if ($Item -eq 'CorrelationRule') {
+                'name','rule_id','version','state'
+              } else {
+                'name','os','type','value'
+              }
+              $Field.foreach{
                 # Capture listed properties
                 if ($_ -eq 'os') {
                   # Convert 'platforms', 'platform_name', and 'platform' to 'os'
@@ -2123,6 +2137,50 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             }
           }
         }
+      } elseif ($p.Key -eq 'CorrelationRule') {
+        # Create CorrelationRule
+        @($p.Value.Import).Where({$_.operation}).foreach{
+          if ($_.operation.start_on -and ([datetime]$_.operation.start_on -lt (Convert-Rfc3339 0))) {
+            # Convert 'start_on' when it is in the past
+            $Def = ($_.operation.schedule.definition -split ' ',2)[1]
+            [long]$Tick = if ($Def) {
+              # Convert 'definition' to tick value
+              $Schedule = [regex]::Match($Def,'(?<h>\d+)h(?<m>\d+)m')
+              (New-TimeSpan -Hours $Schedule.Groups['h'].Value -Minutes $Schedule.Groups['m'].Value).Ticks
+            }
+            # Round 'start_on' up to next interval
+            $_.operation.start_on = if ($Tick) {
+              [long]$Start = [Math]::Round((Get-Date).Ticks/$Tick,0)*$Tick
+              if ([datetime]$Start -lt (Get-Date).AddMinutes(30)) {
+                # Round up another interval when new time is less than 30 minutes in the future
+                [long]$Start = [Math]::Round((Get-Date).AddTicks($Tick).Ticks/$Tick,0)*$Tick
+              }
+              # Use appropriate format for rule creation
+              [Xml.XmlConvert]::ToString(([datetime]$Start).ToUniversalTime(),
+                [Xml.XmlDateTimeSerializationMode]::Utc) -replace '\.\d+Z$','Z'
+            } else {
+              $null
+            }
+          }
+        }
+        do {
+          foreach ($i in ($p.Value.Import | New-FalconCorrelationRule -EA 0 -EV Fail)) {
+            if ($i.message_type -and $i.message) {
+              # Add individual failure to output
+              Add-Result Failed $i $p.Key -Log 'to create' -Comment ($i.message_type,$i.message -join ': ')
+            } elseif ($i.name) {
+              # Capture result and remove individual CorrelationRule from remaining import list
+              Add-Result Created $i $p.Key
+              $p.Value.Import = @($p.Value.Import).Where({$_.name -ne $i.name})
+            }
+          }
+          if ($Fail) {
+            @($p.Value.Import).foreach{
+              # Capture full creation failure
+              Add-Result Failed $_ $p.Key -Comment $Fail.exception.message -Log 'to create'
+            }
+          }
+        } until ($Fail -or !$p.Value.Import)
       } elseif ($p.Key -match 'Group$') {
         # Create FileVantageRuleGroup, FirewallGroup (including FirewallRule), and IoaGroup
         New-Group $p.Key $UaComment
