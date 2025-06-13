@@ -1111,6 +1111,13 @@
       ]
     }
   },
+  "/correlation-rules/entities/latest-rules/v1": {
+    "get": {
+      "query": [
+        "rule_ids"
+      ]
+    }
+  },
   "/correlation-rules/entities/rules/v1": {
     "delete": {
       "query": [

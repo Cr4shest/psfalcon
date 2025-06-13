@@ -100,6 +100,8 @@ Search for Falcon NGSIEM correlation rules
 Requires 'Correlation Rules: Read'.
 .PARAMETER Id
 Correlation rule identifier
+.PARAMETER RuleId
+Correlation 'rule_id' (for latest version only)
 .PARAMETER Filter
 Falcon Query Language expression to limit results
 .PARAMETER Query
@@ -126,6 +128,10 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id,
+    [Parameter(ParameterSetName='/correlation-rules/entities/latest-rules/v1:get',Mandatory)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [Alias('rule_ids')]
+    [string[]]$RuleId,
     [Parameter(ParameterSetName='/correlation-rules/combined/rules/v2:get',Position=1)]
     [Parameter(ParameterSetName='/correlation-rules/queries/rules/v2:get',Position=1)]
     [ValidateScript({Test-FqlStatement $_})]
@@ -158,11 +164,24 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCorrelationRule
     [System.Collections.Generic.List[string]]$List = @()
   }
   process {
-    if ($Id) { @($Id).foreach{ $List.Add($_) }} else { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+    if ($Id) {
+      @($Id).foreach{ $List.Add($_) }
+    } elseif ($RuleId) {
+      @($RuleId).foreach{ $List.Add($_) }
+    } else {
+      Invoke-Falcon @Param -UserInput $PSBoundParameters
+    }
   }
   end {
     if ($List) {
-      $PSBoundParameters['Id'] = @($List)
+      if ($RuleId) {
+        # Add unique 'rule_id' values
+        $PSBoundParameters['rule_ids'] = @($List | Select-Object -Unique)
+        [void]$PSBoundParameters.Remove('RuleId')
+      } else {
+        $PSBoundParameters['ids'] = @($List)
+        [void]$PSBoundParameters.Remove('Id')
+      }
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
