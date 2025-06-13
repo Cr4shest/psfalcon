@@ -10,22 +10,20 @@ Correlation rule 'id'
 Correlation rule name
 .PARAMETER Description
 Correlation rule description
-.PARAMETER Tactic
-MITRE ATT&CK tactic identifier
-.PARAMETER Technique
-MITRE ATT&CK technique identifier
+.PARAMETER MitreAttack
+An object containing MITRE ATT&CK 'tactic_id' and 'technique_id'
 .PARAMETER Severity
 Correlation rule severity
 .PARAMETER Search
-Search properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
+An object containing 'search' properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
 .PARAMETER Operation
-Operation properties ('schedule', 'start_on', 'stop_on')
+An object containing 'operation' properties ('schedule', 'start_on', 'stop_on')
 .PARAMETER Status
 Correlation rule status
-.PARAMETER Status
+.PARAMETER State
 Correlation rule state
 .PARAMETER Notification
-Notification properties ('config', 'options', 'type')
+An object containing 'notifications' properties('config', 'options', 'type')
 .PARAMETER Comment
 Audit log comment
 .LINK
@@ -45,36 +43,32 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
     [string]$Description,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=4)]
-    [Alias('tactic_id')]
-    [string]$Tactic,
+    [Alias('mitre_attack')]
+    [object]$MitreAttack,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=5)]
-    [Alias('technique_id')]
-    [string]$Technique,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=6)]
     [ValidateSet(10,30,50,70,90)]
     [int32]$Severity,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=7)]
+      Position=6)]
     [object]$Search,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=8)]
+      Position=7)]
     [object]$Operation,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=9)]
+      Position=8)]
     [ValidateSet('active','inactive',IgnoreCase=$false)]
     [string]$Status,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=10)]
+      Position=9)]
     [ValidateSet('published','unpublished',IgnoreCase=$false)]
     [string]$State,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=11)]
+      Position=10)]
     [Alias('notifications')]
-    [object]$Notification,
+    [object[]]$Notification,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
-      Position=12)]
+      Position=11)]
     [string]$Comment
   )
   begin {
@@ -90,7 +84,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
       }
     }
   }
-  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters -BodyArray }
 }
 function Get-FalconCorrelationRule {
 <#
@@ -198,22 +192,20 @@ Correlation rule name
 Correlation rule description
 .PARAMETER Cid
 Customer identifier
-.PARAMETER Tactic
-MITRE ATT&CK tactic identifier
-.PARAMETER Technique
-MITRE ATT&CK technique identifier
+.PARAMETER MitreAttack
+An object containing MITRE ATT&CK 'tactic_id' and 'technique_id'
 .PARAMETER Severity
 Correlation rule severity
 .PARAMETER Search
-Search properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
+An object containing 'search' properties ('filter', 'lookback', 'outcome', 'trigger_mode', 'use_ingest_time')
 .PARAMETER Operation
-Operation properties ('schedule', 'start_on', 'stop_on')
+An object containing 'operation' properties ('schedule', 'start_on', 'stop_on')
 .PARAMETER Status
 Correlation rule status
 .PARAMETER TemplateId
 Correlation rule template identifier
 .PARAMETER Notification
-Notification properties ('config', 'options', 'type')
+An object containing 'notifications' properties ('config', 'options', 'type')
 .PARAMETER TriggerOnCreate
 Trigger correlation rule upon creation
 .PARAMETER Comment
@@ -236,38 +228,34 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
     [string]$Cid,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
       Position=4)]
-    [Alias('tactic_id')]
-    [string]$Tactic,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
-      Position=5)]
-    [Alias('technique_id')]
-    [string]$Technique,
+    [Alias('mitre_attack')]
+    [object]$MitreAttack,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
-      ValueFromPipelineByPropertyName,Position=6)]
+      ValueFromPipelineByPropertyName,Position=5)]
     [ValidateSet(10,30,50,70,90)]
     [int32]$Severity,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
-      ValueFromPipelineByPropertyName,Position=7)]
+      ValueFromPipelineByPropertyName,Position=6)]
     [object]$Search,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
-      ValueFromPipelineByPropertyName,Position=8)]
+      ValueFromPipelineByPropertyName,Position=7)]
     [object]$Operation,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
-      ValueFromPipelineByPropertyName,Position=9)]
+      ValueFromPipelineByPropertyName,Position=8)]
     [ValidateSet('active','inactive',IgnoreCase=$false)]
     [string]$Status,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
-      Position=10)]
+      Position=9)]
     [Alias('template_id')]
     [string]$TemplateId,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
-      Position=11)]
+      Position=10)]
     [Alias('notifications')]
-    [object]$Notification,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=12)]
+    [object[]]$Notification,
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=11)]
     [Alias('trigger_on_create')]
     [boolean]$TriggerOnCreate,
-    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=13)]
+    [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Position=12)]
     [string]$Comment
   )
   begin {
@@ -276,9 +264,8 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
       Endpoint = $PSCmdlet.ParameterSetName
       Format = @{
         Body = @{
-          root = @('comment','customer_id','description','name','notifications','operation','search','severity',
-            'status','template_id','trigger_on_create')
-          mitre_attack = @('tactic_id','technique_id')
+          root = @('comment','customer_id','description','mitre_attack','name','notifications','operation',
+            'search','severity','status','template_id','trigger_on_create')
         }
       }
     }
