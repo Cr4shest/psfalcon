@@ -2227,8 +2227,13 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
     # Create Policy
     foreach ($p in $Config.GetEnumerator().Where({$_.Key -match 'Policy$' -and $_.Value.Import})) {
       Write-Host "[Import-FalconConfig] Creating $($p.Key)..."
+      [string[]]$Select = if ($p.Key -eq 'FileVantagePolicy') {
+        'name','platform','description'
+      } else {
+        'name','platform_name','description'
+      }
       for ($i=0;$i -lt $p.Value.Import.Count;$i+=100) {
-        [PSCustomObject[]]$g = @($p.Value.Import | Select-Object name,platform_name,description)[$i..($i+99)]
+        [PSCustomObject[]]$g = @($p.Value.Import | Select-Object $Select)[$i..($i+99)]
         @($g | & "New-Falcon$($p.Key)" -EA 0 -EV Fail).foreach{
           # Update identifier reference, capture result, add to CID list for comparison during modification step
           Set-IdRef $_ $p.Key -Update
