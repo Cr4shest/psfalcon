@@ -2148,12 +2148,12 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
               $Schedule = [regex]::Match($Def,'(?<h>\d+)h(?<m>\d+)m')
               (New-TimeSpan -Hours $Schedule.Groups['h'].Value -Minutes $Schedule.Groups['m'].Value).Ticks
             }
-            # Round 'start_on' up to next interval
             $_.operation.start_on = if ($Tick) {
+              # Round 'start_on' up to next interval
               [long]$Start = [Math]::Round((Get-Date).Ticks/$Tick,0)*$Tick
-              if ([datetime]$Start -lt (Get-Date).AddMinutes(30)) {
-                # Round up another interval when new time is less than 30 minutes in the future
-                [long]$Start = [Math]::Round((Get-Date).AddTicks($Tick).Ticks/$Tick,0)*$Tick
+              if ([datetime]$Start -lt (Get-Date).AddMinutes(15)) {
+                # Round up another interval when new time is less than 15 minutes in the future
+                [long]$Start = [Math]::Round((([datetime]$Start).AddTicks($Tick)).Ticks/$Tick,0)*$Tick
               }
               # Use appropriate format for rule creation
               [Xml.XmlConvert]::ToString(([datetime]$Start).ToUniversalTime(),
