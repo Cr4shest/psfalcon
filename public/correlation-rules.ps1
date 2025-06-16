@@ -5,7 +5,7 @@ Modify Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Write'.
 .PARAMETER Id
-Correlation rule 'id'
+Correlation 'rule_id' (specific version)
 .PARAMETER Name
 Correlation rule name
 .PARAMETER Description
@@ -92,9 +92,9 @@ Search for Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Read'.
 .PARAMETER Id
-Correlation rule 'id' (for a specific rule version)
+Correlation rule identifier (specific version)
 .PARAMETER RuleId
-Correlation 'rule_id' (for latest version only)
+Correlation 'rule_id' (latest version only)
 .PARAMETER Filter
 Falcon Query Language expression to limit results
 .PARAMETER Query
@@ -281,9 +281,9 @@ Remove Falcon NGSIEM correlation rules
 .DESCRIPTION
 Requires 'Correlation Rules: Write'.
 .PARAMETER Id
-Correlation rule 'id' (to remove a specific version)
+Correlation rule identifier (specific version)
 .PARAMETER RuleId
-Correlation 'rule_id' (to remove all versions)
+Correlation 'rule_id' (all versions)
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/Remove-FalconCorrelationRule
 #>
