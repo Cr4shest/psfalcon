@@ -16,9 +16,9 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
   [CmdletBinding(DefaultParameterSetName='ExportItem',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='ExportItem',Position=1)]
-    [ValidateSet('ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
-      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
-      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup','FirewallGroup',
+      'FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion','PreventionPolicy',
+      'ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [Alias('Items')]
     [string[]]$Select,
     [Parameter(ParameterSetName='ExportItem')]
@@ -50,10 +50,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Export-FalconConfig
           # Create policy exports in 'platform_name' order to retain precedence
           & "Get-Falcon$String" -Filter "platform_name:'$_'" -Detailed -All 2>$null
         }
-      } elseif ($String -eq 'CorrelationRule') {
-        # Only export latest CorrelationRule
-        [string[]]$RuleId = (& "Get-Falcon$String" -Detailed -All 2>$null).rule_id
-        if ($RuleId) { & "Get-Falcon$String" -RuleId $RuleId }
       } else {
         & "Get-Falcon$String" -Detailed -All 2>$null
       }
@@ -815,9 +811,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       if ($Obj) {
         $Param = @{ ErrorAction = 'SilentlyContinue'; ErrorVariable = 'Fail' }
         $Ref = $Config.$Item.Cid | Where-Object -FilterScript (Write-SelectFilter $Obj $Item)
-        if ($Ref -and $Item -eq 'CorrelationRule') {
-          ##
-        } elseif ($Ref -and $Item -eq 'FileVantageRuleGroup') {
+        if ($Ref -and $Item -eq 'FileVantageRuleGroup') {
           foreach ($Ar in $Obj.assigned_rules) {
             # Get matching rule from target CID
             $RefAr = $Ref.assigned_rules | Where-Object -FilterScript (Write-SelectFilter $Ar FileVantageRule)
@@ -1743,12 +1737,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             if ($Id -and !@($Config.$Item.Ref).Where({$_.old.Equals($Id)})) {
               # Create new identifier reference
               $Ref = [PSCustomObject]@{ old = $Id; new = '' }
-              [string[]]$Field = if ($Item -eq 'CorrelationRule') {
-                'name','rule_id','version','state'
-              } else {
-                'name','os','type','value'
-              }
-              $Field.foreach{
+              @('name','os','type','value').foreach{
                 # Capture listed properties
                 if ($_ -eq 'os') {
                   # Convert 'platforms', 'platform_name', and 'platform' to 'os'
@@ -2137,50 +2126,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
             }
           }
         }
-      } elseif ($p.Key -eq 'CorrelationRule') {
-        # Create CorrelationRule
-        @($p.Value.Import).Where({$_.operation}).foreach{
-          if ($_.operation.start_on -and ([datetime]$_.operation.start_on -lt (Convert-Rfc3339 0))) {
-            # Convert 'start_on' when it is in the past
-            $Def = ($_.operation.schedule.definition -split ' ',2)[1]
-            [long]$Tick = if ($Def) {
-              # Convert 'definition' to tick value
-              $Schedule = [regex]::Match($Def,'(?<h>\d+)h(?<m>\d+)m')
-              (New-TimeSpan -Hours $Schedule.Groups['h'].Value -Minutes $Schedule.Groups['m'].Value).Ticks
-            }
-            $_.operation.start_on = if ($Tick) {
-              # Round 'start_on' up to next interval
-              [long]$Start = [Math]::Round((Get-Date).Ticks/$Tick,0)*$Tick
-              if ([datetime]$Start -lt (Get-Date).AddMinutes(15)) {
-                # Round up another interval when new time is less than 15 minutes in the future
-                [long]$Start = [Math]::Round((([datetime]$Start).AddTicks($Tick)).Ticks/$Tick,0)*$Tick
-              }
-              # Use appropriate format for rule creation
-              [Xml.XmlConvert]::ToString(([datetime]$Start).ToUniversalTime(),
-                [Xml.XmlDateTimeSerializationMode]::Utc) -replace '\.\d+Z$','Z'
-            } else {
-              $null
-            }
-          }
-        }
-        do {
-          foreach ($i in ($p.Value.Import | New-FalconCorrelationRule -EA 0 -EV Fail)) {
-            if ($i.message_type -and $i.message) {
-              # Add individual failure to output
-              Add-Result Failed $i $p.Key -Log 'to create' -Comment ($i.message_type,$i.message -join ': ')
-            } elseif ($i.name) {
-              # Capture result and remove individual CorrelationRule from remaining import list
-              Add-Result Created $i $p.Key
-              $p.Value.Import = @($p.Value.Import).Where({$_.name -ne $i.name})
-            }
-          }
-          if ($Fail) {
-            @($p.Value.Import).foreach{
-              # Capture full creation failure
-              Add-Result Failed $_ $p.Key -Comment $Fail.exception.message -Log 'to create'
-            }
-          }
-        } until ($Fail -or !$p.Value.Import)
       } elseif ($p.Key -match 'Group$') {
         # Create FileVantageRuleGroup, FirewallGroup (including FirewallRule), and IoaGroup
         New-Group $p.Key $UaComment
