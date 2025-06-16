@@ -23,7 +23,7 @@ Correlation rule status
 .PARAMETER State
 Correlation rule state
 .PARAMETER Notification
-An object containing 'notifications' properties('config', 'options', 'type')
+An object containing 'notifications' properties ('config', 'options', 'type')
 .PARAMETER Comment
 Audit log comment
 .LINK
@@ -44,7 +44,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=4)]
     [Alias('mitre_attack')]
-    [object]$MitreAttack,
+    [object[]]$MitreAttack,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:patch',ValueFromPipelineByPropertyName,
       Position=5)]
     [ValidateSet(10,30,50,70,90)]
@@ -77,9 +77,8 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconCorrelationRule
       Endpoint = $PSCmdlet.ParameterSetName
       Format = @{
         Body = @{
-          root = @('comment','description','id','name','notifications','operation','search','severity','state',
-            'status')
-          mitre_attack = @('tactic_id','technique_id')
+          root = @('comment','description','id','mitre_attack','name','notifications','operation','search',
+            'severity','state','status')
         }
       }
     }
@@ -229,7 +228,7 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconCorrelationRule
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',ValueFromPipelineByPropertyName,
       Position=4)]
     [Alias('mitre_attack')]
-    [object]$MitreAttack,
+    [object[]]$MitreAttack,
     [Parameter(ParameterSetName='/correlation-rules/entities/rules/v1:post',Mandatory,
       ValueFromPipelineByPropertyName,Position=5)]
     [ValidateSet(10,30,50,70,90)]
