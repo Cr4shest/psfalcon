@@ -170,18 +170,18 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
       }
     })]
     [string]$Path,
-    [ValidateSet('ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
-      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
-      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup','FirewallGroup',
+      'FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion','PreventionPolicy',
+      'ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [string[]]$Select,
     [Alias('Force')]
     [switch]$AssignExisting,
     [ValidateSet('All','ContentPolicy','DeviceControlPolicy','PreventionPolicy','ResponsePolicy',
       'SensorUpdatePolicy')]
     [string[]]$ModifyDefault,
-    [ValidateSet('All','ContentPolicy','CorrelationRule','DeviceControlPolicy','FileVantagePolicy',
-      'FileVantageRuleGroup','FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc',
-      'MlExclusion','PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
+    [ValidateSet('All','ContentPolicy','DeviceControlPolicy','FileVantagePolicy','FileVantageRuleGroup',
+      'FirewallGroup','FirewallPolicy','HostGroup','IoaExclusion','IoaGroup','Ioc','MlExclusion',
+      'PreventionPolicy','ResponsePolicy','Script','SensorUpdatePolicy','SvExclusion')]
     [string[]]$ModifyExisting
   )
   begin {
@@ -591,10 +591,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Import-FalconConfig
         'ContentPolicy' {
           'cid','id','name','platform_name','description','enabled',@{l='groups';e={$_.groups |
           Select-Object id,name}},'settings'
-        }
-        'CorrelationRule' {
-          @{l='cid';e={$_.customer_id}},'id','name','description','mitre_attack','notifications','severity',
-          'search','operation','rule_id','state','status','template_id','version'
         }
         'DeviceControlPolicy' {
           'cid','id','name','platform_name','description','enabled',
