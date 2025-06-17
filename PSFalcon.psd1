@@ -1,6 +1,6 @@
 @{
   RootModule = 'PSFalcon.psm1'
-  ModuleVersion = '2.2.8'
+  ModuleVersion = '2.2.9'
   CompatiblePSEditions = @('Desktop','Core')
   GUID = 'd893eb9f-f6bb-4a40-9caf-aaff0e42acd1'
   Author = 'Brendan Kremian'
@@ -55,6 +55,9 @@
     'Remove-FalconCloudGcpAccount'
     'Test-FalconCloudGcpServiceAccount'
 
+    # cloud-security-assets
+    'Get-FalconCloudAsset'
+
     # configuration-assessment
     'Get-FalconConfigAssessment'
     'Get-FalconConfigAssessmentLogic'
@@ -98,7 +101,9 @@
     'Show-FalconRegistryCredential'
 
     # correlation-rules
+    'Edit-FalconCorrelationRule'
     'Get-FalconCorrelationRule'
+    'New-FalconCorrelationRule'
     'Remove-FalconCorrelationRule'
 
     # delivery-settings
@@ -160,6 +165,9 @@
 
     # fem
     'Edit-FalconAsset'
+    'Get-FalconSubsidiary'
+    'New-FalconAsset'
+    'Remove-FalconAsset'
 
     # fdr
     'Get-FalconReplicatorEvent'
@@ -224,6 +232,9 @@
     'Stop-FalconMigration'
     'Rename-FalconMigration'
     'Remove-FalconMigration'
+
+    # humio
+    'New-FalconLookupFile'
 
     # identity-protection
     'Invoke-FalconIdentityGraph'
@@ -355,6 +366,7 @@
     # oauth2
     'Request-FalconToken'
     'Revoke-FalconToken'
+    'Show-FalconToken'
     'Test-FalconToken'
 
     # ods
@@ -379,12 +391,14 @@
     'Edit-FalconContentPolicy'
     'Get-FalconContentPolicy'
     'Get-FalconContentPolicyMember'
+    'Get-FalconContentVersion'
     'Invoke-FalconContentPolicyAction'
     'New-FalconContentPolicy'
     'Remove-FalconContentPolicy'
     'Set-FalconContentPrecedence'
 
     # policy-device-control
+    'Edit-FalconDeviceControlClass'
     'Edit-FalconDeviceControlPolicy'
     'Get-FalconDeviceControlPolicy'
     'Get-FalconDeviceControlPolicyMember'
@@ -521,6 +535,7 @@
     'Invoke-FalconCommand'
     'Invoke-FalconResponderCommand'
     'Receive-FalconGetFile'
+    'Receive-FalconPutFile'
     'Remove-FalconCommand'
     'Remove-FalconGetFile'
     'Remove-FalconPutFile'
@@ -636,7 +651,7 @@
       LicenseUri = 'https://raw.githubusercontent.com/crowdstrike/psfalcon/master/LICENSE'
       ProjectUri = 'https://github.com/crowdstrike/psfalcon'
       IconUri = 'https://raw.githubusercontent.com/crowdstrike/psfalcon/master/icon.png'
-      ReleaseNotes = 'https://github.com/crowdstrike/psfalcon/releases/tag/2.2.7'
+      ReleaseNotes = 'https://github.com/crowdstrike/psfalcon/releases/tag/2.2.9'
     }
   }
 }

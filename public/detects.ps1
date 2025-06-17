@@ -191,7 +191,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCloudIom
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/detects/queries/iom/v2:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/detects/queries/iom/v2:get',Position=2)]
     [ValidateSet('account_name.asc','account_name.desc','account_id.asc','account_id.desc','attack_types.asc',
@@ -266,7 +266,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDetection
     [Alias('ids','detection_id','detection_ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/detects/queries/detects/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/detects/queries/detects/v1:get',Position=2)]
     [Alias('q')]

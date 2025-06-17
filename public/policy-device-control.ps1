@@ -1,3 +1,70 @@
+function Edit-FalconDeviceControlClass {
+<#
+.SYNOPSIS
+Update device control policys classes (USB and Bluetooth)
+.DESCRIPTION
+Requires 'Device control policies: Write'.
+.PARAMETER InputObject
+One or more policy identifiers and class objects to modify in a single request
+.PARAMETER BluetoothClass
+Bluetooth class modifications and exceptions
+.PARAMETER UsbClass
+USB class modifications and exceptions
+.PARAMETER Id
+Policy identifier
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlClass
+#>
+  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control-classes/v1:patch',SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='Pipeline',Mandatory,ValueFromPipeline)]
+    [ValidateScript({
+      Confirm-Parameter $_ 'Edit-FalconDeviceControlClass' '/policy/entities/device-control-classes/v1:patch'
+    })]
+    [Alias('policies','Array')]
+    [object[]]$InputObject,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Mandatory,Position=1)]
+    [ValidatePattern('^[a-fA-F0-9]{32}$')]
+    [string]$Id,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Position=2)]
+    [Alias('bluetooth_classes')]
+    [object]$BluetoothClass,
+    [Parameter(ParameterSetName='/policy/entities/device-control-classes/v1:patch',Position=3)]
+    [Alias('usb_classes')]
+    [object]$UsbClass
+  )
+  begin {
+    $Param = @{
+      Command = $MyInvocation.MyCommand.Name
+      Endpoint = '/policy/entities/device-control-classes/v1:patch'
+    }
+    $Param['Format'] = Get-EndpointFormat $Param.Endpoint
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
+  }
+  process {
+    if ($InputObject) {
+      @($InputObject).foreach{
+        # Filter to defined 'policies' properties and remove empty values
+        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.policies
+        Remove-EmptyValue $i
+        $List.Add($i)
+      }
+    } else {
+      Invoke-Falcon @Param -UserInput $PSBoundParameters
+    }
+  }
+  end {
+    if ($List) {
+      # Modify in groups of 100
+      [void]$PSBoundParameters.Remove('InputObject')
+      $Param.Format = @{ Body = @{ root = @('policies') } }
+      for ($i = 0; $i -lt $List.Count; $i += 100) {
+        $PSBoundParameters['policies'] = @($List[$i..($i + 99)])
+        Invoke-Falcon @Param -UserInput $PSBoundParameters
+      }
+    }
+  }
+}
 function Edit-FalconDeviceControlPolicy {
 <#
 .SYNOPSIS
@@ -12,8 +79,10 @@ Policy identifier
 Policy name
 .PARAMETER Description
 Policy description
-.PARAMETER Setting
-Policy settings
+.PARAMETER UsbSetting
+USB settings
+.PARAMETER BluetoothSetting
+Bluetooth settings
 .PARAMETER Default
 Modify the default Windows Device Control policy
 .PARAMETER Blocked
@@ -27,24 +96,27 @@ Enable custom notification for restricted events
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlPolicy
 #>
-  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control/v1:patch',SupportsShouldProcess)]
+  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control/v2:patch',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='Pipeline',Mandatory,ValueFromPipeline)]
     [ValidateScript({
-      Confirm-Parameter $_ 'Edit-FalconDeviceControlPolicy' '/policy/entities/device-control/v1:patch'
+      Confirm-Parameter $_ 'Edit-FalconDeviceControlPolicy' '/policy/entities/device-control/v2:patch'
     })]
-    [Alias('resources','Array')]
+    [Alias('policies','Array')]
     [object[]]$InputObject,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:patch',Mandatory,Position=1)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:patch',Position=1)]
+    [string]$Name,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:patch',Position=2)]
+    [string]$Description,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:patch',Position=3)]
+    [Alias('usb_settings')]
+    [object]$UsbSetting,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:patch',Position=4)]
+    [Alias('bluetooth_settings')]
+    [object]$BluetoothSetting,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:patch',Mandatory)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [string]$Id,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:patch',Position=2)]
-    [string]$Name,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:patch',Position=3)]
-    [string]$Description,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:patch',Position=4)]
-    [Alias('settings')]
-    [object]$Setting,
     [Parameter(ParameterSetName='/policy/entities/default-device-control/v1:patch',Mandatory)]
     [switch]$Default,
     [Parameter(ParameterSetName='/policy/entities/default-device-control/v1:patch',Position=1)]
@@ -62,21 +134,18 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlPolicy
       Endpoint = if ($PSCmdlet.ParameterSetName -match 'default-device-control') {
         $PSCmdlet.ParameterSetName
       } else {
-        '/policy/entities/device-control/v1:patch'
+        '/policy/entities/device-control/v2:patch'
       }
     }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
       @($InputObject).foreach{
-        # Filter to defined 'resources' properties
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.resources
-        if ($i.settings.classes.exceptions) {
-          # Remove exception 'id' values from 'settings' object
-          @($i.settings.classes.exceptions).Where({$_.id}).foreach{ [void]$_.PSObject.Properties.Remove('id') }
-        }
+        # Filter to defined 'policies' properties and remove empty values
+        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.policies
+        Remove-EmptyValue $i
         $List.Add($i)
       }
     } else {
@@ -105,10 +174,11 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconDeviceControlPolicy
   }
   end {
     if ($List) {
+      # Modify in groups of 100
       [void]$PSBoundParameters.Remove('InputObject')
-      $Param.Format = @{ Body = @{ root = @('resources') } }
+      $Param.Format = @{ Body = @{ root = @('policies') } }
       for ($i = 0; $i -lt $List.Count; $i += 100) {
-        $PSBoundParameters['resources'] = @($List[$i..($i + 99)])
+        $PSBoundParameters['policies'] = @($List[$i..($i + 99)])
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }
@@ -132,8 +202,6 @@ Maximum number of results per request
 Include additional properties
 .PARAMETER Offset
 Position to begin retrieving results
-.PARAMETER Default
-Retrieve default Device Control policy, including notification content
 .PARAMETER Detailed
 Retrieve detailed information
 .PARAMETER All
@@ -145,39 +213,31 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDeviceControlPolicy
 #>
   [CmdletBinding(DefaultParameterSetName='/policy/queries/device-control/v1:get',SupportsShouldProcess)]
   param(
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:get',Mandatory,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:get',Mandatory,
       ValueFromPipelineByPropertyName,ValueFromPipeline)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('ids')]
     [string[]]$Id,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=1)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=2)]
     [ValidateSet('created_by.asc','created_by.desc','created_timestamp.asc','created_timestamp.desc',
       'enabled.asc','enabled.desc','modified_by.asc','modified_by.desc','modified_timestamp.asc',
       'modified_timestamp.desc','name.asc','name.desc','platform_name.asc','platform_name.desc',
       'precedence.asc','precedence.desc',IgnoreCase=$false)]
     [string]$Sort,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=3)]
     [ValidateRange(1,5000)]
     [int32]$Limit,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:get',Position=2)]
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Position=4)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:get',Position=2)]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get',Position=4)]
     [ValidateSet('members',IgnoreCase=$false)]
     [string[]]$Include,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get')]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [int32]$Offset,
-    [Parameter(ParameterSetName='/policy/entities/default-device-control/v1:get',Mandatory)]
-    [switch]$Default,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get',Mandatory)]
+    [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [switch]$Detailed,
-    [Parameter(ParameterSetName='/policy/combined/device-control/v1:get')]
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
     [switch]$All,
     [Parameter(ParameterSetName='/policy/queries/device-control/v1:get')]
@@ -234,7 +294,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconDeviceControlPolicyMember
     [string]$Id,
     [Parameter(ParameterSetName='/policy/queries/device-control-members/v1:get',Position=2)]
     [Parameter(ParameterSetName='/policy/combined/device-control-members/v1:get',Position=2)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/policy/queries/device-control-members/v1:get',Position=3)]
     [Parameter(ParameterSetName='/policy/combined/device-control-members/v1:get',Position=3)]
@@ -311,65 +371,62 @@ function New-FalconDeviceControlPolicy {
 Create Falcon Device Control policies
 .DESCRIPTION
 Requires 'Device control policies: Write'.
-.PARAMETER InputObject
-One or more policies to create in a single request
 .PARAMETER Name
 Policy name
 .PARAMETER PlatformName
 Operating system platform
 .PARAMETER Description
 Policy description
-.PARAMETER Settings
-Hashtable of policy settings
+.PARAMETER UsbSetting
+USB settings [default values will be supplied if omitted]
+.PARAMETER BluetoothSetting
+Bluetooth settings [default values will be supplied if omitted]
 .LINK
 https://github.com/crowdstrike/psfalcon/wiki/New-FalconDeviceControlPolicy
 #>
-  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control/v1:post',SupportsShouldProcess)]
+  [CmdletBinding(DefaultParameterSetName='/policy/entities/device-control/v2:post',SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='Pipeline',Mandatory,ValueFromPipeline)]
     [ValidateScript({
-      Confirm-Parameter $_ 'New-FalconDeviceControlPolicy' '/policy/entities/device-control/v1:post'
+      Confirm-Parameter $_ 'New-FalconDeviceControlPolicy' '/policy/entities/device-control/v2:post'
     })]
-    [Alias('resources','Array')]
+    [Alias('policies','Array')]
     [object[]]$InputObject,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:post',Mandatory,Position=1)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:post',Mandatory,Position=1)]
     [string]$Name,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:post',Mandatory,Position=2)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:post',Mandatory,Position=2)]
     [ValidateSet('Windows','Mac','Linux',IgnoreCase=$false)]
     [Alias('platform_name')]
     [string]$PlatformName,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:post',Position=3)]
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:post',Position=3)]
     [string]$Description,
-    [Parameter(ParameterSetName='/policy/entities/device-control/v1:post',Position=4)]
-    [Alias('settings')]
-    [object]$Setting
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:post',Position=4)]
+    [Alias('usb_settings')]
+    [object]$UsbSetting,
+    [Parameter(ParameterSetName='/policy/entities/device-control/v2:post',Position=5)]
+    [Alias('bluetooth_settings')]
+    [object]$BluetoothSetting
   )
   begin {
-    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = '/policy/entities/device-control/v1:post' }
+    $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = '/policy/entities/device-control/v2:post' }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($InputObject) {
-      @($InputObject).foreach{
-        # Filter to defined 'resources' properties
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.resources
-        if ($i.settings.classes.exceptions) {
-          # Remove exception 'id' values from 'settings' object
-          @($i.settings.classes.exceptions).Where({$_.id}).foreach{ [void]$_.PSObject.Properties.Remove('id') }
-        }
-        $List.Add($i)
-      }
+      # Filter to defined 'policies' properties
+      @($InputObject).foreach{ $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.policies)) }
     } else {
       Invoke-Falcon @Param -UserInput $PSBoundParameters
     }
   }
   end {
     if ($List) {
+      # Create in groups of 100
       [void]$PSBoundParameters.Remove('InputObject')
-      $Param.Format = @{ Body = @{ root = @('resources') } }
+      $Param.Format = @{ Body = @{ root = @('policies') } }
       for ($i = 0; $i -lt $List.Count; $i += 100) {
-        $PSBoundParameters['resources'] = @($List[$i..($i + 99)])
+        $PSBoundParameters['policies'] = @($List[$i..($i + 99)])
         Invoke-Falcon @Param -UserInput $PSBoundParameters
       }
     }

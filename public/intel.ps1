@@ -37,7 +37,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconActor
     [string[]]$Id,
     [Parameter(ParameterSetName='/intel/queries/actors/v1:get',Position=1)]
     [Parameter(ParameterSetName='/intel/combined/actors/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/intel/queries/actors/v1:get',Position=2)]
     [Parameter(ParameterSetName='/intel/combined/actors/v1:get',Position=2)]
@@ -172,7 +172,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCve
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/intel/queries/vulnerabilities/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/intel/queries/vulnerabilities/v1:get',Position=2)]
     [Alias('q')]
@@ -243,7 +243,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconIndicator
     [string[]]$Id,
     [Parameter(ParameterSetName='/intel/queries/indicators/v1:get',Position=1)]
     [Parameter(ParameterSetName='/intel/combined/indicators/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/intel/queries/indicators/v1:get',Position=2)]
     [Parameter(ParameterSetName='/intel/combined/indicators/v1:get',Position=2)]
@@ -329,7 +329,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconIntel
     [string[]]$Id,
     [Parameter(ParameterSetName='/intel/queries/reports/v1:get',Position=1)]
     [Parameter(ParameterSetName='/intel/combined/reports/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/intel/queries/reports/v1:get',Position=2)]
     [Parameter(ParameterSetName='/intel/combined/reports/v1:get',Position=2)]
@@ -412,7 +412,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconMalwareFamily
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/intel/queries/malware/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/intel/queries/malware/v1:get',Position=2)]
     [Alias('q')]

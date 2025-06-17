@@ -35,7 +35,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconReport
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/falconx/queries/reports/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falconx/queries/reports/v1:get',Position=2)]
     [string]$Sort,
@@ -100,7 +100,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconSubmission
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/falconx/queries/submissions/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falconx/queries/submissions/v1:get',Position=2)]
     [string]$Sort,

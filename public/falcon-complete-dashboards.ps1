@@ -23,7 +23,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteAlert
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/alerts/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/alerts/v1:get',Position=2)]
     [string]$Sort,
@@ -65,7 +65,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteAllowlist
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/allowlist/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/allowlist/v1:get',Position=2)]
     [string]$Sort,
@@ -107,7 +107,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteBlocklist
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/blocklist/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/blocklist/v1:get',Position=2)]
     [string]$Sort,
@@ -150,7 +150,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteCollection
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/devicecount-collections/v1:get',
        Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/devicecount-collections/v1:get',
        Position=2)]
@@ -194,7 +194,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteDetection
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/detects/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/detects/v1:get',Position=2)]
     [string]$Sort,
@@ -236,7 +236,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteEscalation
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/escalations/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/escalations/v1:get',Position=2)]
     [string]$Sort,
@@ -278,7 +278,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteIncident
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/incidents/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/incidents/v1:get',Position=2)]
     [string]$Sort,
@@ -320,7 +320,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconCompleteRemediation
     SupportsShouldProcess)]
   param(
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/remediations/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/falcon-complete-dashboards/queries/remediations/v1:get',Position=2)]
     [string]$Sort,

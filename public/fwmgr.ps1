@@ -60,7 +60,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Edit-FalconFirewallGroup
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($DiffOperation) {
@@ -400,7 +400,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallEvent
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/events/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/events/v1:get',Position=2)]
     [Alias('q')]
@@ -531,7 +531,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallGroup
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/rule-groups/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/rule-groups/v1:get',Position=2)]
     [Alias('q')]
@@ -603,7 +603,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallLocation
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/network-locations/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/network-locations/v1:get',Position=2)]
     [Alias('q')]
@@ -662,7 +662,6 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallPlatform
   param(
     [Parameter(ParameterSetName='/fwmgr/entities/platforms/v1:get',Mandatory,ValueFromPipelineByPropertyName,
       ValueFromPipeline)]
-    [ValidateSet('0','1')]
     [Alias('ids')]
     [string[]]$Id,
     [Parameter(ParameterSetName='/fwmgr/queries/platforms/v1:get',Position=1)]
@@ -733,7 +732,7 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallRule
     [string]$PolicyId,
     [Parameter(ParameterSetName='/fwmgr/queries/policy-rules/v1:get',Position=2)]
     [Parameter(ParameterSetName='/fwmgr/queries/rules/v1:get',Position=1)]
-    [ValidateScript({ Test-FqlStatement $_ })]
+    [ValidateScript({Test-FqlStatement $_})]
     [string]$Filter,
     [Parameter(ParameterSetName='/fwmgr/queries/policy-rules/v1:get',Position=3)]
     [Parameter(ParameterSetName='/fwmgr/queries/rules/v1:get',Position=2)]
@@ -769,7 +768,15 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconFirewallRule
     }
     [System.Collections.Generic.List[string]]$List = @()
   }
-  process { if ($Id) { @($Id).foreach{ $List.Add($_) }}}
+  process {
+    if ($Id) {
+      @($Id).foreach{ $List.Add($_) }
+    } elseif ($PolicyId) {
+      # Make request to /fwmgr/queries/policy-rules/v1:get
+      $PSBoundParameters['Id'] = $PSBoundParameters.PolicyId
+      [void]$PSBoundParameters.Remove('PolicyId')
+    }
+  }
   end {
     if ($List) {
       $Param['Format'] = @{ Query = @('ids') }
@@ -831,6 +838,8 @@ Requires 'Firewall management: Write'.
 Rule group name
 .PARAMETER Enabled
 Rule group status
+.PARAMETER Platform
+Operating system platform [default: windows]
 .PARAMETER Description
 Rule group description
 .PARAMETER Rule
@@ -841,8 +850,6 @@ Audit log comment
 Clone default Firewall rules
 .PARAMETER CloneId
 Clone an existing rule group
-.PARAMETER Platform
-Operating system platform [default: 0 (Windows)]
 .PARAMETER Validate
 Toggle to perform validation, instead of creating rule group
 .LINK
@@ -860,46 +867,45 @@ https://github.com/crowdstrike/psfalcon/wiki/New-FalconFirewallGroup
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory,
       ValueFromPipelineByPropertyName,Position=2)]
     [boolean]$Enabled,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=3)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Mandatory,ValueFromPipelineByPropertyName,
       Position=3)]
-    [string]$Description,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory,
+      ValueFromPipelineByPropertyName,Position=3)]
+    [string]$Platform,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=4)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
       Position=4)]
-    [Alias('rules')]
-    [object[]]$Rule,
+    [string]$Description,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=5)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
       Position=5)]
+    [Alias('rules')]
+    [object[]]$Rule,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=6)]
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
+      Position=6)]
     [string]$Comment,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=6)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=6)]
-    [string]$Library,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=7)]
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=7)]
+    [string]$Library,
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',Position=8)]
+    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Position=8)]
     [ValidatePattern('^[a-fA-F0-9]{32}$')]
     [Alias('clone_id','id')]
     [string]$CloneId,
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/v1:post',ValueFromPipelineByPropertyName,Position=8)]
-    [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',ValueFromPipelineByPropertyName,
-      Position=8)]
-    [string]$Platform,
     [Parameter(ParameterSetName='/fwmgr/entities/rule-groups/validation/v1:post',Mandatory)]
     [switch]$Validate
   )
   begin {
     $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }
     $Param['Format'] = Get-EndpointFormat $Param.Endpoint
-    [System.Collections.Generic.List[object]]$List = @()
+    [System.Collections.Generic.List[PSCustomObject]]$List = @()
   }
   process {
     if ($Rule) {
       @($Rule).foreach{
         # Filter to defined 'rules' properties and remove empty values
-        $i = [PSCustomObject]$_ | Select-Object $Param.Format.Body.rules
-        Remove-EmptyValue $i name,description,comment
-        $List.Add($i)
+        $List.Add(([PSCustomObject]$_ | Select-Object $Param.Format.Body.rules))
       }
     }
   }
