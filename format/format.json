@@ -4537,6 +4537,14 @@
       ]
     }
   },
+  "/policy/queries/content-update-pin-versions/v1": {
+    "get": {
+      "query": [
+        "category",
+        "sort"
+      ]
+    }
+  },
   "/policy/queries/device-control-members/v1": {
     "get": {
       "query": [

@@ -391,6 +391,7 @@
     'Edit-FalconContentPolicy'
     'Get-FalconContentPolicy'
     'Get-FalconContentPolicyMember'
+    'Get-FalconContentVersion'
     'Invoke-FalconContentPolicyAction'
     'New-FalconContentPolicy'
     'Remove-FalconContentPolicy'

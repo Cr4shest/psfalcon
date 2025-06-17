@@ -187,6 +187,33 @@ https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentPolicyMember
   begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
   process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
 }
+function Get-FalconContentVersion {
+<#
+.SYNOPSIS
+List Content Update versions available for policy pinning
+.DESCRIPTION
+Requires 'Content Update Policies: Read'.
+.PARAMETER Category
+Content category
+.PARAMETER Sort
+Property and direction to sort results
+.LINK
+https://github.com/crowdstrike/psfalcon/wiki/Get-FalconContentVersion
+#>
+  [CmdletBinding(DefaultParameterSetName='/policy/queries/content-update-pin-versions/v1:get',
+    SupportsShouldProcess)]
+  param(
+    [Parameter(ParameterSetName='/policy/queries/content-update-pin-versions/v1:get',Mandatory,Position=1)]
+    [ValidateSet('rapid_response_al_bl_listing','sensor_operations','system_critical','vulnerability_management',
+      IgnoreCase=$false)]
+    [string]$Category,
+    [Parameter(ParameterSetName='/policy/queries/content-update-pin-versions/v1:get',Position=2)]
+    [ValidateSet('deployed_timestamp.asc','deployed_timestamp.desc',IgnoreCase=$false)]
+    [string]$Sort
+  )
+  begin { $Param = @{ Command = $MyInvocation.MyCommand.Name; Endpoint = $PSCmdlet.ParameterSetName }}
+  process { Invoke-Falcon @Param -UserInput $PSBoundParameters }
+}
 function Invoke-FalconContentPolicyAction {
 <#
 .SYNOPSIS
